@@ -177,7 +177,10 @@ def get_data(
         orig_tokens.extend(str(text).split())
         labels = str(labels).split()
         pad_idx = label2idx[pad]
-        assert len(orig_tokens) == len(labels)
+        # 剔除不合法的数据行
+        if len(orig_tokens) != len(labels):
+            continue
+        # assert len(orig_tokens) == len(labels)
         prev_label = ""
         for idx_, (orig_token, label) in enumerate(zip(orig_tokens, labels)):
             # Fix BIO to IO as BERT proposed https://arxiv.org/pdf/1810.04805.pdf
@@ -251,6 +254,7 @@ def get_data(
             # Meta data
             meta=meta
         ))
+
         assert len(input_ids) == len(input_mask)
         assert len(input_ids) == len(input_type_ids)
         assert len(input_ids) == len(labels_ids)
