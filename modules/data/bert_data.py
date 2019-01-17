@@ -187,7 +187,7 @@ def get_data(
                 prev_label = label
             else:
                 prev_label = label
-            
+
             cur_tokens = tokenizer.tokenize(orig_token)
             if max_seq_len - 1 < len(bert_tokens) + len(cur_tokens):
                 break
@@ -195,7 +195,7 @@ def get_data(
             if is_meta:
                 meta_tokens.extend([meta[idx_]] * len(cur_tokens))
             bert_tokens.extend(cur_tokens)
-            bert_label = [prefix + label] + ["X"] * (len(cur_tokens) - 1) # ["I_" + label] * (len(cur_tokens) - 1)
+            bert_label = [prefix + label] + ["X"] * (len(cur_tokens) - 1)  # ["I_" + label] * (len(cur_tokens) - 1)
             bert_labels.extend(bert_label)
         bert_tokens.append("[SEP]")
         bert_labels.append("[SEP]")
@@ -256,7 +256,6 @@ def get_data(
         assert len(input_ids) == len(labels_ids)
         assert len(input_ids) == len(labels_mask)
     if is_cls:
-        
         return features, (label2idx, cls2idx)
     return features, label2idx
 
@@ -285,8 +284,8 @@ def get_bert_data_loaders(train, valid, vocab_file, batch_size=16, cuda=True, is
     return train_dl, valid_dl, tokenizer, label2idx, max_seq_len
 
 
-def get_bert_data_loader_for_predict(path, learner):
-    df = pd.read_csv(path)
+def get_bert_data_loader_for_predict(path, learner, delimiter=None):
+    df = pd.read_csv(path, delimiter=delimiter)
     f, _ = get_data(df, tokenizer=learner.data.tokenizer,
                     label2idx=learner.data.label2idx, cls2idx=learner.data.cls2idx,
                     is_cls=learner.data.is_cls,
@@ -332,6 +331,20 @@ class BertNerData(object):
             fn = get_bert_data_loaders
         else:
             raise NotImplementedError("No requested mode :(.")
-        return cls(*fn(
-            train_path, valid_path, vocab_file, batch_size, cuda, is_cls, do_lower_case, max_seq_len, is_meta),
-                   batch_size=batch_size, cuda=cuda, is_meta=is_meta, delimiter=delimiter)
+        return cls(
+            *fn(
+                train_path,
+                valid_path,
+                vocab_file,
+                batch_size,
+                cuda,
+                is_cls,
+                do_lower_case,
+                max_seq_len,
+                is_meta,
+                delimiter=delimiter
+            ),
+            batch_size=batch_size,
+            cuda=cuda,
+            is_meta=is_meta
+        )
