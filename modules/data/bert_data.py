@@ -262,9 +262,9 @@ def get_data(
 
 
 def get_bert_data_loaders(train, valid, vocab_file, batch_size=16, cuda=True, is_cls=False,
-                          do_lower_case=False, max_seq_len=424, is_meta=False):
-    train = pd.read_csv(train)
-    valid = pd.read_csv(valid)
+                          do_lower_case=False, max_seq_len=424, is_meta=False, delimiter=None):
+    train = pd.read_csv(train, delimiter=delimiter)
+    valid = pd.read_csv(valid, delimiter=delimiter)
 
     cls2idx = None
 
@@ -320,7 +320,7 @@ class BertNerData(object):
     @classmethod
     def create(cls,
                train_path, valid_path, vocab_file, batch_size=16, cuda=True, is_cls=False,
-               data_type="bert_cased", max_seq_len=424, is_meta=False):
+               data_type="bert_cased", max_seq_len=424, is_meta=False, delimiter=None):
         if ipython_info():
             global tqdm_notebook
             tqdm_notebook = tqdm
@@ -334,4 +334,4 @@ class BertNerData(object):
             raise NotImplementedError("No requested mode :(.")
         return cls(*fn(
             train_path, valid_path, vocab_file, batch_size, cuda, is_cls, do_lower_case, max_seq_len, is_meta),
-                   batch_size=batch_size, cuda=cuda, is_meta=is_meta)
+                   batch_size=batch_size, cuda=cuda, is_meta=is_meta, delimiter=delimiter)
