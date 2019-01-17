@@ -254,11 +254,15 @@ def get_data(
             # Meta data
             meta=meta
         ))
-
-        assert len(input_ids) == len(input_mask)
-        assert len(input_ids) == len(input_type_ids)
-        assert len(input_ids) == len(labels_ids)
-        assert len(input_ids) == len(labels_mask)
+        if len(input_ids) != len(input_mask) \
+            or len(input_ids) != len(input_type_ids) \
+            or len(input_ids) != len(labels_ids) \
+            or len(input_ids) != len(labels_mask):
+            continue
+        # assert len(input_ids) == len(input_mask)
+        # assert len(input_ids) == len(input_type_ids)
+        # assert len(input_ids) == len(labels_ids)
+        # assert len(input_ids) == len(labels_mask)
     if is_cls:
         return features, (label2idx, cls2idx)
     return features, label2idx
