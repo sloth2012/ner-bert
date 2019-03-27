@@ -86,7 +86,7 @@ class BertAdam(Optimizer):
             {'params': [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)], 'weight_decay': 0.01},
             {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
             ]
-        super(BertAdam, self).__init__(optimizer_grouped_parameters, defaults)
+        super().__init__(optimizer_grouped_parameters, defaults)
         self.global_step = 1
         self.t_total = t_total
 

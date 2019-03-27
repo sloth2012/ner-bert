@@ -51,11 +51,33 @@ class CRFDecoder(nn.Module):
 
 
 class AttnCRFDecoder(nn.Module):
+    @classmethod
+    def from_config(cls, config):
+        return cls.create(**config)
+
+    def get_config(self):
+        config = {
+            "name": "AttnCRFDecoder",
+            "params": {
+                "label_size": self.label_size,
+                "input_dim": self.input_dim,
+                "input_dropout": self.input_dropout,
+                "key_dim": self.key_dim,
+                "val_dim": self.val_dim,
+                "num_heads": self.num_heads
+            }
+        }
+        return config
+
     def __init__(self,
                  crf, label_size, input_dim, input_dropout=0.5,
                  key_dim=64, val_dim=64, num_heads=3):
         super(AttnCRFDecoder, self).__init__()
+        self.input_dropout = input_dropout
         self.input_dim = input_dim
+        self.key_dim = key_dim
+        self.val_dim = val_dim
+        self.num_heads = num_heads
         self.attn = MultiHeadAttention(key_dim, val_dim, input_dim, num_heads, input_dropout)
         self.linear = Linears(in_features=input_dim,
                               out_features=label_size,
@@ -615,11 +637,35 @@ class AttnNCRFJointDecoder(nn.Module):
 
 
 class AttnNCRFDecoder(nn.Module):
+    @classmethod
+    def from_config(cls, config):
+        return cls.create(**config)
+
+    def get_config(self):
+        config = {
+            "name": "AttnNCRFDecoder",
+            "params": {
+                "label_size": self.label_size,
+                "input_dim": self.input_dim,
+                "input_dropout": self.input_dropout,
+                "key_dim": self.key_dim,
+                "val_dim": self.val_dim,
+                "num_heads": self.num_heads,
+                "nbest": self.nbest,
+            }
+        }
+        return config
+
     def __init__(self,
                  crf, label_size, input_dim, input_dropout=0.5,
                  key_dim=64, val_dim=64, num_heads=3, nbest=8):
         super(AttnNCRFDecoder, self).__init__()
+
+        self.input_dropout = input_dropout
         self.input_dim = input_dim
+        self.key_dim = key_dim
+        self.val_dim = val_dim
+        self.num_heads = num_heads
         self.attn = MultiHeadAttention(key_dim, val_dim, input_dim, num_heads, input_dropout)
         self.linear = Linears(in_features=input_dim,
                               out_features=label_size,

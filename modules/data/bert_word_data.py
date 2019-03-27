@@ -1,7 +1,6 @@
 from modules.data import tokenization
-from modules.utils.utils import ipython_info
 import pandas as pd
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import json
 from .bert_data import InputFeatures, DataLoaderForTrain, DataLoaderForPredict
 
@@ -25,7 +24,7 @@ def get_data(
     total = len(df["0"].tolist())
     cls = None
     meta = None
-    for args in tqdm_notebook(enumerate(zip(*all_args)), total=total, leave=False):
+    for args in tqdm(enumerate(zip(*all_args)), total=total, desc="bert word data"):
         if is_cls:
             if is_meta:
                 idx, (text, labels, cls, meta) = args
@@ -195,9 +194,6 @@ class BertNerData(object):
     def create(cls,
                train_path, valid_path, vocab_file, batch_size=16, cuda=True, is_cls=False,
                data_type="bert_cased", max_seq_len=424, is_meta=False):
-        if ipython_info():
-            global tqdm_notebook
-            tqdm_notebook = tqdm
         if data_type == "bert_cased":
             do_lower_case = False
             fn = get_bert_data_loaders

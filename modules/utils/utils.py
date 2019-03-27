@@ -1,10 +1,5 @@
-import __main__ as main
 from collections import Counter
 import numpy as np
-
-
-def ipython_info():
-    return hasattr(main, '__file__')
 
 
 def voting_choicer(tok_map, labels):

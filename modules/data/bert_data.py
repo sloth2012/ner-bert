@@ -3,8 +3,10 @@ from modules.data import tokenization
 import torch
 import pandas as pd
 import numpy as np
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import json
+
+delimiter = '△△△'
 
 
 class InputFeatures(object):
@@ -133,7 +135,6 @@ class DataLoaderForPredict(DataLoader):
 def get_data(
         df, tokenizer, label2idx=None, max_seq_len=424, pad="<pad>", cls2idx=None,
         is_cls=False, is_meta=False):
-    tqdm_notebook = tqdm
     if label2idx is None:
         label2idx = {pad: 0, '[CLS]': 1}
     features = []
@@ -150,7 +151,7 @@ def get_data(
     total = len(df["0"].tolist())
     cls = None
     meta = None
-    for args in tqdm_notebook(enumerate(zip(*all_args)), total=total, leave=False):
+    for args in tqdm(enumerate(zip(*all_args)), total=total, desc="bert data"):
         if is_cls:
             if is_meta:
                 idx, (text, labels, cls, meta) = args
@@ -182,7 +183,7 @@ def get_data(
         labels = str(labels).split()
         pad_idx = label2idx[pad]
         assert len(orig_tokens) == len(labels)
-        # prev_label = ""
+        prev_label = ""
         for idx_, (orig_token, label) in enumerate(zip(orig_tokens, labels)):
             # Fix BIO to IO as BERT proposed https://arxiv.org/pdf/1810.04805.pdf
             prefix = "B_"
@@ -193,7 +194,7 @@ def get_data(
                 prev_label = label
             else:
                 prev_label = label
-            
+
             cur_tokens = tokenizer.tokenize(orig_token)
             if max_seq_len - 1 < len(bert_tokens) + len(cur_tokens):
                 break
@@ -262,19 +263,19 @@ def get_data(
         assert len(input_ids) == len(input_mask)
         assert len(input_ids) == len(input_type_ids)
         if len(input_ids) != len(labels_ids):
-            print(len(input_ids), len(labels_ids), orig_tokens)
-            raise
+            print(len(input_ids), len(labels_ids), orig_tokens, labels)
+            raise Exception('len(input_ids) != len(labels_ids):')
         assert len(input_ids) == len(labels_mask)
     if is_cls:
-        
         return features, (label2idx, cls2idx)
     return features, label2idx
 
 
 def get_bert_data_loaders(train, valid, vocab_file, batch_size=16, cuda=True, is_cls=False,
                           do_lower_case=False, max_seq_len=424, is_meta=False, label2idx=None, cls2idx=None):
-    train = pd.read_csv(train)
-    valid = pd.read_csv(valid)
+    global delimiter
+    train = pd.read_csv(train, delimiter=delimiter)
+    valid = pd.read_csv(valid, delimiter=delimiter)
 
     tokenizer = tokenization.FullTokenizer(vocab_file=vocab_file, do_lower_case=do_lower_case)
     train_f, label2idx = get_data(
@@ -295,7 +296,8 @@ def get_bert_data_loaders(train, valid, vocab_file, batch_size=16, cuda=True, is
 
 
 def get_bert_data_loader_for_predict(path, learner):
-    df = pd.read_csv(path)
+    global delimiter
+    df = pd.read_csv(path, delimiter=delimiter)
     f, _ = get_data(df, tokenizer=learner.data.tokenizer,
                     label2idx=learner.data.label2idx, cls2idx=learner.data.cls2idx,
                     is_cls=learner.data.is_cls,

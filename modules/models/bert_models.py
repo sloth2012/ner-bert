@@ -7,8 +7,8 @@ from .released_models import released_models
 
 
 class NerModel(nn.Module, metaclass=abc.ABCMeta):
-
     """Base class for all Models"""
+
     def __init__(self, encoder, decoder, use_cuda=True):
         super(NerModel, self).__init__()
         self.encoder = encoder

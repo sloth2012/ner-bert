@@ -115,5 +115,6 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+.DS_Store
 
 datadrive

@@ -1,4 +1,4 @@
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from sklearn_crfsuite.metrics import flat_classification_report
 import logging
 import torch
@@ -16,7 +16,7 @@ def train_step(dl, model, optimizer, lr_scheduler=None, clip=None, num_epoch=1):
     model.train()
     epoch_loss = 0
     idx = 0
-    pr = tqdm(dl, total=len(dl), leave=False)
+    pr = tqdm(dl, total=len(dl))
     for batch in pr:
         idx += 1
         model.zero_grad()
@@ -87,7 +87,7 @@ def validate_step(dl, model, id2label, sup_labels, id2cls=None):
     idx = 0
     preds_cpu, targets_cpu = [], []
     preds_cpu_cls, targets_cpu_cls = [], []
-    for batch in tqdm(dl, total=len(dl), leave=False):
+    for batch in tqdm(dl, total=len(dl)):
         idx += 1
         labels_mask, labels_ids = batch[-2:]
         preds = model.forward(batch)
@@ -111,7 +111,7 @@ def predict(dl, model, id2label, id2cls=None):
     idx = 0
     preds_cpu = []
     preds_cpu_cls = []
-    for batch, sorted_idx in tqdm(dl, total=len(dl), leave=False):
+    for batch, sorted_idx in tqdm(dl, total=len(dl)):
         idx += 1
         labels_mask, labels_ids = batch[-2:]
         preds = model.forward(batch)
@@ -139,7 +139,7 @@ class NerLearner(object):
     def config(self):
         config = {
             "data": self.data.config,
-            "model": self.model.config,
+            "model": self.model.get_config(),
             "learner": {
                 "best_model_path": self.best_model_path,
                 "lr": self.lr,
@@ -255,6 +255,7 @@ class NerLearner(object):
     def save_model(self, path=None):
         path = path if path else self.best_model_path
         torch.save(self.model.state_dict(), path)
+        self.save_config(self.best_model_path.split('.')[0] + '.json')
     
     def load_model(self, path=None):
         path = path if path else self.best_model_path
