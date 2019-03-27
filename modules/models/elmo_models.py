@@ -10,7 +10,8 @@ class NerModel(nn.Module, metaclass=abc.ABCMeta):
         super(NerModel, self).__init__()
         self.encoder = encoder
         self.decoder = decoder
-        if use_cuda:
+        import torch
+        if use_cuda and torch.cuda.is_available():
             self.cuda()
 
     @abc.abstractmethod

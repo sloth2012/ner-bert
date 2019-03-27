@@ -24,12 +24,12 @@ class BertBiLSTMEncoder(nn.Module):
         self.embeddings = embeddings
         self.hidden_dim = hidden_dim
         self.rnn_layers = rnn_layers
-        self.use_cuda = use_cuda
+        self.use_cuda = use_cuda and torch.cuda.is_available()
         self.lstm = nn.LSTM(
             self.embeddings.embedding_dim, hidden_dim // 2,
             rnn_layers, batch_first=True, bidirectional=True)
         self.hidden = None
-        if use_cuda:
+        if self.use_cuda:
             self.cuda()
         self.init_weights()
         self.output_dim = hidden_dim
@@ -83,12 +83,12 @@ class ElmoBiLSTMEncoder(nn.Module):
         self.embeddings = embeddings
         self.hidden_dim = hidden_dim
         self.rnn_layers = rnn_layers
-        self.use_cuda = use_cuda
+        self.use_cuda = use_cuda and torch.cuda.is_available()
         self.lstm = nn.LSTM(
             self.embeddings.embedding_dim, hidden_dim // 2,
             rnn_layers, batch_first=True, bidirectional=True)
         self.hidden = None
-        if use_cuda:
+        if self.use_cuda:
             self.cuda()
         self.init_weights()
         self.output_dim = hidden_dim
@@ -134,12 +134,12 @@ class BertMetaBiLSTMEncoder(nn.Module):
         self.embeddings = embeddings
         self.hidden_dim = hidden_dim
         self.rnn_layers = rnn_layers
-        self.use_cuda = use_cuda
+        self.use_cuda = use_cuda and torch.cuda.is_available()
         self.lstm = nn.LSTM(
             self.embeddings.embedding_dim, hidden_dim // 2,
             rnn_layers, batch_first=True, bidirectional=True)
         self.hidden = None
-        if use_cuda:
+        if self.use_cuda:
             self.cuda()
         self.init_weights()
         self.meta_dim = meta_dim

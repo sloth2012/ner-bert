@@ -34,13 +34,16 @@ def recover_model_from_config(config: dict):
         return model_type.create(**params)
 
 
-def recover_from_config(path, for_train=True):
-
-    from modules.data import bert_data
+def recover_from_config_file(path, for_train=True):
     import json
     with open(path, "r") as file:
         config = json.load(file)
 
+    return recover_from_config(config, for_train=for_train)
+
+
+def recover_from_config(config, for_train=True):
+    from modules.data import bert_data
     data = bert_data.BertNerData.from_config(config["data"], for_train)
     model_config = config["model"]
 
@@ -49,4 +52,3 @@ def recover_from_config(path, for_train=True):
     from modules.train.train import NerLearner
 
     return NerLearner(model=model, data=data, **config["learner"])
-

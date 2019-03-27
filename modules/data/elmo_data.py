@@ -82,7 +82,7 @@ class DataLoaderForTrain(DataLoader):
         self.c_pad_id = c_pad_id
         self.l_pad_id = 0
         self.max_chars = max_chars
-        self.cuda = cuda
+        self.cuda = cuda and torch.cuda.is_available()
 
     def collate_fn(self, data):
         batch_size = len(data)
@@ -305,7 +305,7 @@ class DataLoaderForPredict(DataLoader):
         self.c_pad_id = c_pad_id
         self.l_pad_id = 0
         self.max_chars = max_chars
-        self.cuda = cuda
+        self.cuda = cuda and torch.cuda.is_available()
 
     def collate_fn(self, data):
         batch_size = len(data)
@@ -418,7 +418,7 @@ class ElmoNerData(object):
         self.char2idx = char2idx
         self.cls2idx = cls2idx
         self.batch_size = batch_size
-        self.cuda = cuda
+        self.cuda = cuda and torch.cuda.is_available()
         self.id2label = sorted(label2idx.keys(), key=lambda x: label2idx[x])
         if word2idx is not None:
             self.idx2word = sorted(word2idx.keys(), key=lambda x: word2idx[x])

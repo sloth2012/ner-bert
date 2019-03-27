@@ -182,7 +182,8 @@ class BertNerData(object):
         self.cls2idx = cls2idx
         self.batch_size = batch_size
         self.is_meta = is_meta
-        self.cuda = cuda
+        import torch
+        self.cuda = cuda and torch.cuda.is_available()
         self.id2label = sorted(label2idx.keys(), key=lambda x: label2idx[x])
         self.is_cls = False
         self.max_seq_len = max_seq_len

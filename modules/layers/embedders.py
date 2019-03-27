@@ -36,13 +36,13 @@ class BertEmbedder(nn.Module):
         self.is_freeze = freeze
         self.embedding_dim = embedding_dim
         self.model = model
-        self.use_cuda = use_cuda
+        self.use_cuda = use_cuda and torch.cuda.is_available()
         self.bert_mode = bert_mode
         if self.bert_mode == "weighted":
             self.bert_weights = nn.Parameter(torch.FloatTensor(12, 1))
             self.bert_gamma = nn.Parameter(torch.FloatTensor(1, 1))
 
-        if use_cuda:
+        if use_cuda and torch.cuda.is_available():
             self.cuda()
 
         self.init_weights()
@@ -102,7 +102,7 @@ class BertEmbedder(nn.Module):
                freeze=True):
         bert_config = bert_modeling.BertConfig.from_json_file(bert_config_file)
         model = bert_modeling.BertModel(bert_config)
-        if use_cuda:
+        if use_cuda and torch.cuda.is_available():
             device = torch.device("cuda")
             map_location = "cuda"
         else:
@@ -172,7 +172,7 @@ class ElmoEmbedder(nn.Module):
         self.model = model
         self.embedding_dim = embedding_dim
         self.model = model
-        self.use_cuda = use_cuda
+        self.use_cuda = use_cuda and torch.cuda.is_available()
         self.config = config
         self.elmo_mode = elmo_mode
 
@@ -180,7 +180,7 @@ class ElmoEmbedder(nn.Module):
             self.elmo_weights = nn.Parameter(torch.FloatTensor(3, 1))
             self.elmo_gamma = nn.Parameter(torch.FloatTensor(1, 1))
 
-        if use_cuda:
+        if self.use_cuda:
             self.cuda()
 
         self.init_weights()

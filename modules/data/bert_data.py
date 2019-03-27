@@ -66,7 +66,8 @@ class DataLoaderForTrain(DataLoader):
             shuffle=shuffle,
             **kwargs
         )
-        self.cuda = cuda
+
+        self.cuda = cuda and torch.cuda.is_available()
 
     def collate_fn(self, data):
         res = []
@@ -102,7 +103,7 @@ class DataLoaderForPredict(DataLoader):
             collate_fn=self.collate_fn,
             **kwargs
         )
-        self.cuda = cuda
+        self.cuda = cuda and torch.cuda.is_available()
 
     def collate_fn(self, data):
         res = []
@@ -309,6 +310,107 @@ def get_bert_data_loader_for_predict(path, learner):
     return dl
 
 
+# 先主要针对中文序列标注（单字），转换空格
+def single_example_for_predict(text_arr: list, learner):
+    replace_chars = [
+        '\x97',
+        '\uf076',
+        "\ue405",
+        "\ue105",
+        "\ue415",
+        '\x07',
+        '\x7f',
+        ' '
+    ]
+
+    clean_text_arr = []
+    # TODO 暂时未用到cls和meta，所以先不考虑
+    for text in text_arr:
+        text_size = len(text)
+
+        text = ' '.join(['unk' if ch in replace_chars else ch for ch in text])
+
+        labels = ' '.join('O' * text_size)
+
+        clean_text_arr.append((labels, text))
+
+    df = pd.DataFrame(clean_text_arr, columns=['0', '1'])
+    f, _ = get_data(
+        df,
+        tokenizer=learner.data.tokenizer,
+        label2idx=learner.data.label2idx,
+        cls2idx=learner.data.cls2idx,
+        is_cls=learner.data.is_cls,
+        max_seq_len=learner.data.max_seq_len,
+        is_meta=learner.data.is_meta
+    )
+    cuda = torch.cuda.is_available()
+    dl = DataLoaderForPredict(
+        f, batch_size=learner.data.batch_size, shuffle=False,
+        cuda=cuda)
+
+    preds = learner.predict(dl)
+
+    from modules.utils.utils import bert_labels2tokens, first_choicer, tokens2spans
+
+    tokens, labels = bert_labels2tokens(dl, preds, fn=first_choicer)
+    span_preds = tokens2spans(tokens, labels)
+
+    results = []
+    # 加个恢复机制
+    for idx, pred in enumerate(span_preds):
+        st = 0
+        result = []
+        text = text_arr[idx]
+        text_size = len(text)
+
+        for token, lab in pred:
+            valid_st = st
+            tok_size = len(token)
+            tok_st = 0
+
+            # 目前就两个自定义边界
+            while st < text_size and tok_st < tok_size:
+                if token[tok_st] == ' ':
+                    tok_st += 1
+                    continue
+
+                if text[st] != token[tok_st]:
+                    # 标记为unk
+                    tok_ed1 = tok_st + 3
+                    if tok_ed1 > tok_size:
+                        # print('err:', token, lab, token[tok_st:tok_ed1])
+                        raise Exception('边界识别错误:unk')
+
+                    if token[tok_st:tok_ed1] == 'unk':
+                        tok_st = tok_ed1
+                        st += 1
+                    else:
+                        # 标记为[UNK]
+                        tok_ed2 = tok_st + 5
+                        if tok_ed2 > tok_size:
+                            raise Exception('边界识别错误1:[UNK]')
+
+                        if token[tok_st:tok_ed2] == '[UNK]':
+                            tok_st = tok_ed2
+                            st += 1
+                        else:
+                            raise Exception('边界识别错误2:[UNK]')
+
+                else:
+                    st += 1
+                    tok_st += 1
+
+            if tok_st < tok_size:
+                raise Exception('识别边界出错')
+
+            result.append((text[valid_st: st], lab))
+
+        results.append(result)
+
+    return results
+
+
 class BertNerData(object):
 
     @property
@@ -343,7 +445,7 @@ class BertNerData(object):
         self.cls2idx = cls2idx
         self.batch_size = batch_size
         self.is_meta = is_meta
-        self.cuda = cuda
+        self.cuda = cuda and torch.cuda.is_available()
         self.id2label = sorted(label2idx.keys(), key=lambda x: label2idx[x])
         self.is_cls = False
         self.max_seq_len = max_seq_len

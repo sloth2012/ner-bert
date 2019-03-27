@@ -40,7 +40,7 @@ class NCRF(nn.Module):
     def __init__(self, tagset_size, gpu):
         super(NCRF, self).__init__()
         print("build CRF...")
-        self.gpu = gpu
+        self.gpu = gpu and torch.cuda.is_available()
         # Matrix of transition parameters.  Entry i,j is the score of transitioning *to* i *from* j.
         self.tagset_size = tagset_size
         # # We add 2 here, because of START_TAG and STOP_TAG

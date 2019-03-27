@@ -140,7 +140,7 @@ class NMTDecoder(nn.Module):
 
         self.loss = nn.CrossEntropyLoss(ignore_index=pad_idx)
 
-        self.use_cuda = use_cuda
+        self.use_cuda = use_cuda and torch.cuda.is_available()
 
         if use_cuda:
             self.cuda()
@@ -472,7 +472,7 @@ class NMTJointDecoder(nn.Module):
             hiddens=[hidden_dim // 2],
             activation="relu")
 
-        self.use_cuda = use_cuda
+        self.use_cuda = use_cuda and torch.cuda.is_available()
 
         if use_cuda:
             self.cuda()

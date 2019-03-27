@@ -4,6 +4,7 @@ from modules.layers.embedders import *
 import abc
 import sys
 from .released_models import released_models
+import torch
 
 
 class NerModel(nn.Module, metaclass=abc.ABCMeta):
@@ -13,8 +14,8 @@ class NerModel(nn.Module, metaclass=abc.ABCMeta):
         super(NerModel, self).__init__()
         self.encoder = encoder
         self.decoder = decoder
-        self.use_cuda = use_cuda
-        if use_cuda:
+        self.use_cuda = use_cuda and torch.cuda.is_available()
+        if self.use_cuda:
             self.cuda()
 
     @abc.abstractmethod

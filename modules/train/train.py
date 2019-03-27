@@ -190,9 +190,12 @@ class NerLearner(object):
         self.best_target_metric = 0.
         self.lr_scheduler = None
 
-    def save_config(self, path):
+    def save_config(self, path=None):
+        path = path if path else self.best_model_path.split('.')[0] + '.json'
         with open(path, "w") as file:
-            json.dump(self.config, file)
+            file.write(
+                json.dumps(self.config, indent=2, ensure_ascii=False)
+            )
 
     @classmethod
     def from_config(cls, path, for_train=True):
@@ -255,8 +258,16 @@ class NerLearner(object):
     def save_model(self, path=None):
         path = path if path else self.best_model_path
         torch.save(self.model.state_dict(), path)
-        self.save_config(self.best_model_path.split('.')[0] + '.json')
+        self.save_config()
     
     def load_model(self, path=None):
         path = path if path else self.best_model_path
-        self.model.load_state_dict(torch.load(path))
+        if torch.cuda.is_available():
+            device = torch.device("cuda")
+            map_location = "cuda"
+        else:
+            map_location = "cpu"
+            device = torch.device("cpu")
+        self.model.load_state_dict(torch.load(path, map_location=map_location))
+        self.model = self.model.to(device)
+
