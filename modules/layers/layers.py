@@ -96,9 +96,9 @@ class _MultiHeadAttention(nn.Module):
 
         self.attention = ScaledDotProductAttention(d_k, dropout)
 
-        init.xavier_normal(self.w_q)
-        init.xavier_normal(self.w_k)
-        init.xavier_normal(self.w_v)
+        init.xavier_normal_(self.w_q)
+        init.xavier_normal_(self.w_k)
+        init.xavier_normal_(self.w_v)
 
     def forward(self, q, k, v, attn_mask=None):
         (d_k, d_v, d_model, n_heads) = (self.d_k, self.d_v, self.d_model, self.n_heads)

@@ -53,8 +53,8 @@ class BertEmbedder(nn.Module):
 
     def init_weights(self):
         if self.bert_mode == "weighted":
-            nn.init.xavier_normal(self.bert_gamma)
-            nn.init.xavier_normal(self.bert_weights)
+            nn.init.xavier_normal_(self.bert_gamma)
+            nn.init.xavier_normal_(self.bert_weights)
 
     def forward(self, *batch):
         input_ids, input_mask, input_type_ids = batch[:3]

@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 from tqdm.auto import tqdm
 import json
+from web.utils.common import timer
 
 delimiter = '△△△'
 
@@ -133,6 +134,7 @@ class DataLoaderForPredict(DataLoader):
         return res_, sorted_idx
 
 
+@timer
 def get_data(
         df, tokenizer, label2idx=None, max_seq_len=424, pad="<pad>", cls2idx=None,
         is_cls=False, is_meta=False):
@@ -311,6 +313,7 @@ def get_bert_data_loader_for_predict(path, learner):
 
 
 # 先主要针对中文序列标注（单字），转换空格
+@timer
 def single_example_for_predict(text_arr: list, learner):
     replace_chars = [
         '\x97',
@@ -349,6 +352,7 @@ def single_example_for_predict(text_arr: list, learner):
         f, batch_size=learner.data.batch_size, shuffle=False,
         cuda=cuda)
 
+    # 此处耗时较多
     preds = learner.predict(dl)
 
     from modules.utils.utils import bert_labels2tokens, first_choicer, tokens2spans
