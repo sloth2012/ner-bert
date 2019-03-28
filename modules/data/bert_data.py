@@ -449,11 +449,11 @@ def single_example_for_predict(input_text, learner):
     results = []
 
     pred_counter = 0
+
+    # print(line_marker)
     for idx, (marker, (pointer_st, pointer_ed)) in enumerate(line_marker):
 
-        if marker == 0:
-            results.append(('\n', 'w'))
-        else:
+        if pointer_ed != pointer_st:
             # 下边为恢复机制
             pred = span_preds[pred_counter]
             st = 0
@@ -470,7 +470,6 @@ def single_example_for_predict(input_text, learner):
                     if token[tok_st] == ' ':
                         tok_st += 1
                         continue
-
                     if text[st] != token[tok_st]:
                         # 标记为unk
                         tok_ed1 = tok_st + 3
@@ -487,6 +486,7 @@ def single_example_for_predict(input_text, learner):
                             if tok_ed2 > tok_size:
                                 raise Exception('边界识别错误1:[UNK]')
 
+                            # print('err:', token, lab, token[tok_st:tok_ed2])
                             if token[tok_st:tok_ed2] == '[UNK]':
                                 tok_st = tok_ed2
                                 st += 1
@@ -504,6 +504,8 @@ def single_example_for_predict(input_text, learner):
 
             pred_counter += 1
 
+        if marker == 0:
+            results.append(('\n', 'w'))
     return results
 
 
