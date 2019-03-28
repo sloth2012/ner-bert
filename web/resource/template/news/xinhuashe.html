@@ -1,0 +1,249 @@
+{% extends "../base.html" %}
+{% block title %} {{ title }} {% end %}
+{% block content %}
+<div class="row">
+    <ol class="breadcrumb">
+        <li><a href="/">Home</a></li>
+        <li class="active">{{title}}</li>
+    </ol>
+</div>
+<div class="row" id="interactive">
+    <div class="col-xs-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">新闻详情</h3>
+            </div>
+            <div class="panel-body">
+
+                <div class="row">
+                    <div class="col-xs-7">
+                        <div class="row">
+                            <div class="col-xs-2">
+                                <h5 class="title">标题:</h5>
+                            </div>
+                            <div class="col-xs-10">
+                                <div class="text-center strong"> {{ news['title'] }}</div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-2">
+                                <h5 class="title">发布时间:</h5>
+                            </div>
+                            <div class="col-xs-10">
+                                <div class="text-center"> {{ news['pub_time'] }}</div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-2">
+                                <h5 class="title">关键词:</h5>
+                            </div>
+                            <div class="col-xs-10">
+                                <div class="text-center">
+                                    {{ news['keywords'] }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-2">
+                                <h5 class="title">新闻内容:</h5>
+                            </div>
+                            <div class="col-xs-10">
+                                <div class="content-text">
+                                    {% raw news['content'] %}
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="col-xs-5">
+                        <div class="panel panel-default">
+                            <form id="form">
+                                <div class="panel-title">
+                                    <h3 class="panel-title">主题:</h3>
+                                </div>
+
+                                <div class="panel-body">
+
+                                    <div class="row">
+                                        <div class="news_topics">
+                                            <textarea class="form-control" id="topics" type="text"
+                                                      placeholder="主题词，多主题请使用中文逗号分隔">
+                                            </textarea>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="panel-title">
+                                    <h3 class="panel-title">高频词:</h3>
+                                </div>
+
+                                <div class="panel-body">
+
+                                    <div class="row">
+                                        <div class="news_keywords">
+                                            <textarea class="form-control" id="keywords" type="text"
+                                                      placeholder="关键词，请使用中文逗号分隔">
+                                            </textarea>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <div class="panel-title">
+                                    <h3 class="panel-title">人物(暂不提供update):</h3>
+                                </div>
+
+                                <div class="panel-body">
+
+                                    {% for value in news.get('ner', []) %}
+                                    <div class="row">
+                                        <span class="label label-default col-xs-2">{{ value['per'] }}</span>
+                                        <div class="news_person col-xs-10">
+                                            <textarea class="form-control" id="persons" type="text" readonly="readonly"
+                                                      placeholder="请输入人物描述（org+title）">
+                                                {{ value['desc'] }}
+                                            </textarea>
+                                        </div>
+                                        <br/>
+                                    </div>
+                                    {% end %}
+                                </div>
+                                <div class="panel-title">
+                                    <h3 class="panel-title">言论(暂不提供update):</h3>
+                                </div>
+                                <div class="panel-body">
+
+                                    {% for value in news.get('speech', []) %}
+                                    <div class="row">
+                                        <span class="label label-default col-xs-2">{{ value['per'] }}</span>
+                                        <div class="news_speech col-xs-10">
+                                            <textarea class="form-control" id="speeches" type="text" readonly="readonly"
+                                                      placeholder="请输出对话内容">
+                                                {{ value['speech'] }}
+                                            </textarea>
+                                        </div>
+                                        <br/>
+                                        <br/>
+                                    </div>
+                                    {% end %}
+                                </div>
+
+                                <div class="col-xs-4">
+                                    <button type="submit" class="btn btn-primary">保存结果</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% end %}
+{% block js %}
+<script>
+    var ws = null;
+
+    //保存一些cache信息，如es的新闻id
+    var news_id = "{{ news['_id'] }}";
+
+    function connect_ws() {
+        var ws_url = "{{ ws_url }}";
+        ws = new WebSocket(ws_url);
+        console.log("{{ ws_url }} connected!");
+        ws.onmessage = function (e) {
+            console.log('receive news');
+            console.log(e.data);
+            $('body').loading('stop');
+            var results = JSON.parse(e.data)
+            if (results.status == 'success') {
+                window.Modal.alert({
+                    msg: "保存成功,开始执行下一条(随机进行)",
+                });
+                setTimeout("location.reload(true)", 600);
+            } else {
+                window.Modal.alert({
+                    msg: results.msg
+                });
+            }
+        };
+
+        ws.onclose = function (e) {
+            console.log('Socket is closed. Reconnect will be attempted in 1 second.', e.reason);
+            setTimeout(function () {
+                connect_ws();
+            }, 1000);
+        };
+
+        ws.onerror = function (err) {
+            console.error('Socket encountered error: ', err.message, 'Closing socket');
+            ws.close();
+        };
+
+
+    }
+
+    $(function () {
+        connect_ws();
+
+        var default_topics = "{{ news.get('topics', '') }}".trim();
+        if (default_topics != "") {
+            $('#topics').val(default_topics);
+        }
+
+        var default_keywords = "{{ news.get('topic_keywords', '') }}".trim();
+        if (default_keywords != "") {
+            $('#keywords').val(default_keywords);
+        }
+
+
+        $('#form').on('submit', function (e) {
+            e.preventDefault();
+
+            $('body').loading();
+
+            var topics = $('#topics').val().trim();
+            var keywords = $('#keywords').val().trim();
+
+            var msg = {
+                news_id: news_id,
+                topics: topics
+            };
+            var hasErr = false;
+
+            if (!topics) {
+                window.Modal.alert({
+                    msg: '主题不能为空！'
+                });
+                hasErr = true
+            }
+
+            if (!hasErr) {
+
+                if (keywords != '') {
+                    msg['keywords'] = keywords;
+                }
+                else {
+                    window.Modal.alert({
+                        msg: '高频词汇不能为空！'
+                    });
+                    hasErr = true;
+                }
+            }
+            if (!hasErr) {
+                var send_msg = JSON.stringify({
+                    'action': 'save2es',
+                    'data': msg
+                });
+                console.log("send msg:" + send_msg);
+                ws.send(send_msg);
+            } else {
+                $('body').loading('stop');
+            }
+        });
+
+    });
+
+</script>
+{% end %}

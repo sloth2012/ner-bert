@@ -77,7 +77,7 @@ def tokens2spans_(tokens_, labels_):
             try:
                 span_label = labels_[idx_].split("_")[1]
             except IndexError:
-                print(label, labels_[idx_].split("_"))
+                print('error:', label, labels_[idx_].split("_"))
                 span_label = None
             idx_ += 1
             while idx_ < len(labels_) and labels_[idx_] not in ["I_O", "B_O", "O"] \

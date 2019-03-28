@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <title>微信公众号搜索</title>
+    <link rel="stylesheet" type="text/css" href="{{ static_url('css/style.css')}}">
+    <link rel="stylesheet" type="text/css" href="{{ static_url('css/m3.min.v.7.css')}}">
+    <link rel="stylesheet" href="http://cdn.bootcss.com/bootstrap/3.3.0/css/bootstrap.min.css">
+
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.9.1.js"></script>
+    <script src="http://cdn.bootcss.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+    <script src="http://malsup.github.com/jquery.form.js"></script>
+    <script src="{{ static_url('js/common.min.js')}}"></script>
+
+
+</head>
+<body style>
+
+
+<div class="header">
+    <form name="searchForm" id="searchForm" action="/wechat_profile/query" method="post">
+        <div class="querybox">
+            <div class="qborder">
+                <div class="qborder2">
+                    <input type="hidden" name="type" id="type" value="2">
+                    <input type="text" class="query" id="query" name="query" value="" placeholder="机器之心"
+                           autocomplete="off">
+                    <a href="javascript:void(0);" class="qreset2" style="display:none" uigs="search_reset"></a>
+                </div>
+            </div>
+            <input type="hidden" name="ie" value="utf8">
+            <input type="hidden" name="s_from" value="input">
+            <!--<input type="button" value="搜文章" class="swz" onclick="weinxinfilter(this, 2)" uigs="search_article">-->
+            <input type="button" value="搜公众号" class="swz2" onclick="weinxinfilter(this, 1)" uigs="search_account">
+            <input type="hidden" name="_sug_" id="_sug_" value="n">
+            <input type="hidden" name="_sug_type_" id="_sug_type_" value="">
+            <input type="button" class="__submit__" value="提交" style="display: none">
+        </div>
+    </form>
+</div>
+<div>
+<div class="wrapper" id="wrapper">
+    <div class="news-box">
+        <ul class="news-list2">
+            {% for info in wechats %}
+            <li id="sogou_vr_11002301_box_{{info['index']}}" style="z-index: 0;width: 50%">
+                <div class="left">
+                    <div class="gzh-box2">
+                        <div class="img-box">
+                            <a target="_blank" uigs="account_image_{{info['index']}}" href="{{info['url']}}">
+                                <span></span>
+                                <img src="{{info['avatar']}}"
+                                     style="width: 58px; height: auto; margin-top: 0px" onerror="errorHeadImage(this)">
+                            </a>
+
+                        </div>
+
+                        <div class="tx-box">
+                            <p class="tit">
+                                <a target="_blank" uigs="account_name_{{info['index']}}" href="{{info['url']}}">
+                                    <em>
+                                        <!--red_end-->
+                                        {{info['name']}}
+                                        <!--red_beg-->
+                                    </em>
+                                </a>
+                                <i></i>
+                            </p>
+                            <p class="info">
+                                微信号:&nbsp;&nbsp;
+                                <label name="em_weixinhao">{{info['wechatid']}}</label>
+                                <span class="line-s"></span>
+                            </p>
+                        </div>
+
+                        <div class="ew-pop">
+                            <a class="code" href="javascript:void(0)">
+                                <!--<img src="{{ static_url('images/ico_ewm.png')}}">-->
+                                <input type="button" class="db_star" wechatid="{{info['wechatid']}}"
+                                       url="{{info['url']}}" name="{{info['name']}}" data-loading-text="Loading..."
+                                       data-stared-text="关注" data-cancelstared-text="取消关注"
+                                       biz="{{info['biz']}}" value="关注" isindb="{{info['isindb']}}">
+                            </a>
+                            <span style="display: none" class="pop">
+                                <i></i>
+                                "微信扫一扫关注"
+                                <br>
+
+
+                                <img height="" width="104" src="{{info['qrcode']}}"
+                                onerror="qrcodeShowError("{{info['qrcode']}}")">
+                                <img class="shot-img" src="{{info['avatar']}}" height="32" width="32"
+                                     onerror="errorHeadImage(this)">
+                            </span>
+                        </div>
+
+                    </div>
+                    <dl>
+                        <dt>功能介绍：</dt>
+                        <dd>
+                            <em>
+                                <!--red_beg-->
+                                {{info['intro']}}
+                                <!--red_end-->
+                            </em>
+                        </dd>
+                    </dl>
+                    <dl>
+                        <dt>微信认证：</dt>
+                        <dd>
+                            <em>
+                                <!--red_beg-->
+                                {{info['auth']}}
+                                <!--red_end-->
+                            </em>
+                        </dd>
+                    </dl>
+                </div>
+
+            </li>
+            {% end %}
+        </ul>
+    </div>
+
+</div>
+</div>
+<script>
+
+    function submitQuery() {
+//        var params = {
+//            type: 'POST',
+////            dataType: 'text',
+//            url: '/wechat_profile/query',
+//            success: function (data) {
+//                console.log('success!')
+//                if(!data) return;
+////                var results = data
+//                console.log(data);
+//            },
+//            error: function (e) {
+//                alert('提交失败，失败信息为' + e);
+//            }
+//        };
+//
+//        $('#searchForm').ajaxSubmit(params);
+        $('#searchForm').submit();
+    };
+
+
+    $(".query").keydown(function (event) {
+        if (event.keyCode == 13) {
+            submitQuery();
+        }
+    });
+
+    var query = "{{query}}";
+    if(query != 'None'){
+        $('.query').val(query);
+    }
+
+    function weinxinfilter(index) {
+        $('#type').val(wechat_profile);
+        submitQuery();
+    }
+
+    $('.db_star').click(function (event) {
+        var self = $(this);
+        var isindb = self.attr("isindb");
+        self.button('loading');
+
+        var action;
+        var newIndb;
+        if(isindb === "True"){
+            action = "stared";
+            newIndb = "False";
+        }else {
+            action = 'cancelstared';
+            newIndb = "True";
+        }
+
+        $.post("/wechat_profile/db", {
+            biz: self.attr("biz"),
+            url: self.attr("url"),
+            wechatid: self.attr("wechatid"),
+            name: self.attr("name"),
+            isindb:  isindb
+
+        },function (data, status) {
+            console.log(data, status);
+            if(data['success'] === true){
+                console.log('success!');
+                self.button(action);
+                self.attr('isindb', newIndb);
+            }else {
+                alert('操作失败，请重试！');
+                self.button('reset');
+            }
+
+        });
+
+    });
+
+    $('.db_star').each(function () {
+        var isindb = $(this).attr('isindb');
+        if(isindb == "True"){
+            $(this).val('取消关注');
+        }
+    });
+</script>
+
+</body>
+</html>

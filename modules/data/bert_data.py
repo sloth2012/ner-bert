@@ -312,9 +312,10 @@ def get_bert_data_loader_for_predict(path, learner):
     return dl
 
 
-# 先主要针对中文序列标注（单字），转换空格
-@timer
-def single_example_for_predict(text_arr: list, learner):
+# TODO 暂时未用到cls和meta，所以先不考虑
+def split_text(input_text: str, max_seq_len, cls=None, meta=None):
+    import re
+
     replace_chars = [
         '\x97',
         '\uf076',
@@ -323,21 +324,106 @@ def single_example_for_predict(text_arr: list, learner):
         "\ue415",
         '\x07',
         '\x7f',
+        '\u3000',
+        '\xa0',
         ' '
     ]
 
+    punctuation = ',，.。：:！;! '
+
+    # 记录一些索引，用于还原。元组，第一个0表示为换行，1表示直接追加；第二个参数表示起始位置
+    line_marker = []
+
+    # 设置两个指针，进行符合长度的串的提取
+    pointer_st = 0
+    pointer_ed = 0
+    last_valid_punc_pos = -1
+
     clean_text_arr = []
-    # TODO 暂时未用到cls和meta，所以先不考虑
-    for text in text_arr:
-        text_size = len(text)
 
-        text = ' '.join(['unk' if ch in replace_chars else ch for ch in text])
+    text_list = list(input_text)
+    for i, ch in enumerate(text_list):
+        if ch in replace_chars:
+            text_list[i] = 'unk'
 
-        labels = ' '.join('O' * text_size)
+        if (pointer_ed - pointer_st) > max_seq_len:
+            if last_valid_punc_pos == -1:
+                valid_text_list = text_list[pointer_st:pointer_ed]
 
-        clean_text_arr.append((labels, text))
+                clean_text_arr.append((
+                    ' '.join(valid_text_list),
+                    ' '.join('O' * len(valid_text_list))
+                ))
 
-    df = pd.DataFrame(clean_text_arr, columns=['0', '1'])
+                line_marker.append((
+                    1, (pointer_st, pointer_ed)
+                ))
+                pointer_st = pointer_ed
+
+            else:
+                ed = last_valid_punc_pos + 1
+                valid_text_list = text_list[pointer_st:ed]
+
+                clean_text_arr.append((
+                    ' '.join(valid_text_list),
+                    ' '.join('O' * len(valid_text_list))
+                ))
+
+                line_marker.append((
+                    1, (pointer_st, ed)
+                ))
+                pointer_st = ed
+
+            last_valid_punc_pos = -1
+
+        else:
+            if ch == '\n':
+                valid_text_list = text_list[pointer_st: i]
+                if len(valid_text_list) != 0:
+                    clean_text_arr.append((
+                        ' '.join(valid_text_list),
+                        ' '.join('O' * len(valid_text_list))
+                    ))
+
+                line_marker.append((
+                    0, (pointer_st, i)
+                ))
+                pointer_st = i + 1
+
+                last_valid_punc_pos = -1
+
+            elif ch in punctuation:
+                last_valid_punc_pos = i
+
+        pointer_ed = i + 1
+
+    if pointer_st != pointer_ed:
+        valid_text_list = text_list[pointer_st: pointer_ed]
+        if len(valid_text_list) != 0:
+            clean_text_arr.append((
+                ' '.join(valid_text_list),
+                ' '.join('O' * len(valid_text_list))
+            ))
+
+            line_marker.append((
+                1, (pointer_st, pointer_ed)
+            ))
+
+    return clean_text_arr, line_marker
+
+
+# 先主要针对中文序列标注（单字），转换空格。一篇文本，不含换行符号
+@timer
+def single_example_for_predict(input_text, learner):
+    # 记录空行的索引，以供插入
+    null_line_marker = []
+    clean_text_arr, line_marker = split_text(
+        input_text=input_text,
+        max_seq_len=learner.data.max_seq_len
+    )
+
+    df = pd.DataFrame(clean_text_arr, columns=['1', '0'])
+    # print(repr(df.values[0][0]), repr(df.values[0][1]))
     f, _ = get_data(
         df,
         tokenizer=learner.data.tokenizer,
@@ -361,56 +447,62 @@ def single_example_for_predict(text_arr: list, learner):
     span_preds = tokens2spans(tokens, labels)
 
     results = []
-    # 加个恢复机制
-    for idx, pred in enumerate(span_preds):
-        st = 0
-        result = []
-        text = text_arr[idx]
-        text_size = len(text)
 
-        for token, lab in pred:
-            valid_st = st
-            tok_size = len(token)
-            tok_st = 0
+    pred_counter = 0
+    for idx, (marker, (pointer_st, pointer_ed)) in enumerate(line_marker):
 
-            # 目前就两个自定义边界
-            while st < text_size and tok_st < tok_size:
-                if token[tok_st] == ' ':
-                    tok_st += 1
-                    continue
+        if marker == 0:
+            results.append(('\n', 'w'))
+        else:
+            # 下边为恢复机制
+            pred = span_preds[pred_counter]
+            st = 0
+            text = input_text[pointer_st:pointer_ed]
+            text_size = len(text)
 
-                if text[st] != token[tok_st]:
-                    # 标记为unk
-                    tok_ed1 = tok_st + 3
-                    if tok_ed1 > tok_size:
-                        # print('err:', token, lab, token[tok_st:tok_ed1])
-                        raise Exception('边界识别错误:unk')
+            for token, lab in pred:
+                valid_st = st
+                tok_size = len(token)
+                tok_st = 0
 
-                    if token[tok_st:tok_ed1] == 'unk':
-                        tok_st = tok_ed1
-                        st += 1
-                    else:
-                        # 标记为[UNK]
-                        tok_ed2 = tok_st + 5
-                        if tok_ed2 > tok_size:
-                            raise Exception('边界识别错误1:[UNK]')
+                # 目前就两个自定义边界
+                while st < text_size and tok_st < tok_size:
+                    if token[tok_st] == ' ':
+                        tok_st += 1
+                        continue
 
-                        if token[tok_st:tok_ed2] == '[UNK]':
-                            tok_st = tok_ed2
+                    if text[st] != token[tok_st]:
+                        # 标记为unk
+                        tok_ed1 = tok_st + 3
+                        if tok_ed1 > tok_size:
+                            # print('err:', token, lab, token[tok_st:tok_ed1])
+                            raise Exception('边界识别错误:unk')
+
+                        if token[tok_st:tok_ed1] == 'unk':
+                            tok_st = tok_ed1
                             st += 1
                         else:
-                            raise Exception('边界识别错误2:[UNK]')
+                            # 标记为[UNK]
+                            tok_ed2 = tok_st + 5
+                            if tok_ed2 > tok_size:
+                                raise Exception('边界识别错误1:[UNK]')
 
-                else:
-                    st += 1
-                    tok_st += 1
+                            if token[tok_st:tok_ed2] == '[UNK]':
+                                tok_st = tok_ed2
+                                st += 1
+                            else:
+                                raise Exception('边界识别错误2:[UNK]')
 
-            if tok_st < tok_size:
-                raise Exception('识别边界出错')
+                    else:
+                        st += 1
+                        tok_st += 1
 
-            result.append((text[valid_st: st], lab))
+                if tok_st < tok_size:
+                    raise Exception('识别边界出错')
 
-        results.append(result)
+                results.append((text[valid_st: st], lab))
+
+            pred_counter += 1
 
     return results
 
@@ -495,6 +587,13 @@ class BertNerData(object):
             fn = get_bert_data_loaders
         else:
             raise NotImplementedError("No requested mode :(.")
-        return cls(train_path, valid_path, vocab_file, data_type, *fn(
-            train_path, valid_path, vocab_file, batch_size, cuda, is_cls, do_lower_case, max_seq_len, is_meta),
-                   batch_size=batch_size, cuda=cuda, is_meta=is_meta)
+        return cls(
+            train_path,
+            valid_path,
+            vocab_file,
+            data_type,
+            *fn(train_path, valid_path, vocab_file, batch_size, cuda, is_cls, do_lower_case, max_seq_len, is_meta),
+            batch_size=batch_size,
+            cuda=cuda,
+            is_meta=is_meta
+        )

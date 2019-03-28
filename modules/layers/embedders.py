@@ -29,7 +29,7 @@ class BertEmbedder(nn.Module):
         return config
 
     def __init__(self, model, bert_config_file, init_checkpoint_pt,
-                 freeze=True, embedding_dim=768, use_cuda=True, bert_mode="weighted",):
+                 freeze=True, embedding_dim=768, use_cuda=True, bert_mode="weighted", ):
         super(BertEmbedder, self).__init__()
         self.bert_config_file = bert_config_file
         self.init_checkpoint_pt = init_checkpoint_pt
@@ -118,9 +118,13 @@ class BertEmbedder(nn.Module):
 
 
 class Word2VecEmbedder(nn.Module):
-    def __init__(self,
-                 vocab_size,
-                 embedding_dim=300):
+    def __init__(
+            self,
+            vocab_size,
+            embedding_dim=300,
+            trainable=True,
+            normalize=True
+    ):
         super(Word2VecEmbedder, self).__init__()
         self.vocab_size = vocab_size
         self.embedding_dim = embedding_dim

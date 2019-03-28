@@ -102,7 +102,6 @@ class BertBiLSTMCRF(NerModel):
 
 
 class BertBiLSTMAttnCRF(NerModel):
-
     def forward(self, batch):
         output, _ = self.encoder(batch)
         return self.decoder(output, batch[-2])

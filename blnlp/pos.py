@@ -13,13 +13,7 @@ class PosTagger:
             raise Exception('Empty Input Text!')
         from modules.data.bert_data import single_example_for_predict
 
-        res = single_example_for_predict([text], learner=self.learner)
-
-        return res[0]
-
-    def cut_multi(self, text_arr):
-        from modules.data.bert_data import single_example_for_predict
-        res = single_example_for_predict(text_arr, learner=self.learner)
+        res = single_example_for_predict(text, learner=self.learner)
 
         return res
 

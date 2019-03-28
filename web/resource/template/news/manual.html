@@ -1,0 +1,223 @@
+{% extends "../base.html" %}
+{% block title %} {{ title }} {% end %}
+{% block content %}
+<div class="row">
+    <ol class="breadcrumb">
+        <li><a href="/">Home</a></li>
+        <li class="active">{{title}}</li>
+    </ol>
+</div>
+<div class="row" id="interactive">
+    <div class="col-xs-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">输入参数</h3>
+            </div>
+            <div class="panel-body">
+                <form id="form">
+                    <div class="row">
+                        <div class="col-xs-10">
+                            <div class="row">
+                                <div class="col-xs-2">
+                                    <h5 class="title">URL(必填):</h5>
+                                </div>
+                                <div class="col-xs-8">
+                                    <input class="form-control" id="url" type="text" placeholder="http://...."
+                                           oninput="url_onchange()">
+                                </div>
+                            </div>
+                            <div class="row optional_input">
+                                <div class="col-xs-2">
+                                    <h5 class="title">发布时间(必填):</h5>
+                                </div>
+                                <div class="col-xs-8">
+                                    <input class="form-control" id="pub_time" type="text"
+                                           placeholder="2019-01-01 12:00:00">
+                                </div>
+                            </div>
+                            <div class="row optional_input">
+                                <div class="col-xs-2">
+                                    <h5 class="title">新闻标题(选填):</h5>
+                                </div>
+                                <div class="col-xs-8">
+                                    <input class="form-control" id="title" type="text"
+                                           placeholder="习近平同朝鲜劳动党委员长金正恩举行会谈">
+                                </div>
+                            </div>
+                            <div class="row optional_input">
+                                <div class="col-xs-2">
+                                    <h5 class="title">新闻来源(选填):</h5>
+                                </div>
+                                <div class="col-xs-8">
+                                    <input class="form-control" id="source" type="text" placeholder="机器之心">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-2">
+                            <button type="submit" class="btn btn-primary">内容解析</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xs-12">
+        <div class="panel panel-default">
+
+            <div class="panel-heading">
+                <h3 class="panel-title">Results</h3>
+            </div>
+
+            <center>
+                <button type="button" class="btn btn-primary save2db">内容保存</button>
+            </center>
+            <div class="panel-body">
+                <div class="col-xs-12" id="results" style="overflow-y:scroll; height: 250px">
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% end %}
+{% block js %}
+<script>
+    var need_support = false;
+
+    function url_onchange() {
+        var value = $('#url').val();
+        if (/(www\.toutiao\.com)|(36kr\.com)|(mp\.weixin\.qq\.com)/.test(value)) {
+            $('.optional_input').hide();
+            need_support = false;
+        } else {
+            $('.optional_input').show();
+            need_support = true;
+        }
+    }
+
+    var ws = null;
+    var $results = $('#results');
+
+    var cache_response = null;
+
+    function connect_ws() {
+        var ws_url = "{{ ws_url }}";
+        ws = new WebSocket(ws_url);
+        console.log("{{ ws_url }} connected!");
+        ws.onmessage = function (e) {
+            console.log('receive news');
+            console.log(e.data);
+            $('body').loading('stop');
+            var results = JSON.parse(e.data)
+            if (results.status == 'success') {
+                if(results.action == 'content_parser') {
+                    $('.save2db').show();
+                    cache_response = results.data;
+                }else if(results.action == 'save2db'){
+                    $results.empty();
+                    $('.save2db').hide();
+
+                    cache_response = null;
+                }
+                $results.append('<pre><code>' + JSON.stringify(results.data, null, 2) + '</code></pre>');
+
+            } else {
+                alert(results.msg);
+            }
+        };
+
+        ws.onclose = function (e) {
+            console.log('Socket is closed. Reconnect will be attempted in 1 second.', e.reason);
+            setTimeout(function () {
+                connect_ws();
+            }, 1000);
+        };
+
+        ws.onerror = function (err) {
+            console.error('Socket encountered error: ', err.message, 'Closing socket');
+            ws.close();
+        };
+
+
+    }
+
+    $(function () {
+        $('.optional_input').hide()
+        $('.save2db').hide()
+        connect_ws();
+
+
+        $('.save2db').click(function (e) {
+            e.preventDefault();
+            $('body').loading();
+
+            if(!cache_response){
+                alert('内容为空，无法保存！');
+                $('body').loading('stop');
+            }else{
+                var send_msg = JSON.stringify({
+                    'action': 'save2db',
+                    'data': cache_response
+                })
+                console.log("send msg:" + send_msg);
+                ws.send(send_msg);
+            }
+        })
+
+        $('#form').on('submit', function (e) {
+            e.preventDefault();
+
+            $('body').loading();
+            $('.save2db').hide();
+
+            var url = $('#url').val().trim();
+            var pub_time = $('#pub_time').val().trim();
+            var source = $('#source').val().trim();
+            var title = $('#source').val().trim();
+            var msg = {
+                url: url
+            };
+            var hasErr = false;
+
+
+            if (!url) {
+                alert('URL不能为空！');
+                hasErr = true
+            }
+
+            if (need_support && !hasErr) {
+
+                if (!hasErr && pub_time != '') {
+                    msg['pub_time'] = pub_time;
+                }
+                else {
+                    alert('发布时间不能为空！');
+                    hasErr = true;
+                }
+                if (!hasErr && source != '') {
+                    msg['source'] = source;
+                }
+                if (!hasErr && title != '') {
+                    msg['title'] = title;
+                }
+            }
+            if (!hasErr) {
+                var send_msg = JSON.stringify({
+                    'action': 'content_parser',
+                    'data': msg
+                });
+                console.log("send msg:" + send_msg);
+                ws.send(send_msg);
+                $results.empty();
+            } else {
+                $('body').loading('stop');
+            }
+        });
+
+    });
+
+</script>
+{% end %}
