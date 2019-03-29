@@ -15,6 +15,8 @@ def main():
     from web.application import application
     logger = getLogger('server')
 
+    tornado.options.parse_command_line()
+
     [i.setFormatter(LogFormatter()) for i in logging.getLogger().handlers]
     http_server = tornado.httpserver.HTTPServer(application)
     http_server.listen(options.port)
