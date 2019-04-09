@@ -12,13 +12,6 @@ class LogFormatter(log.LogFormatter):
         )
 
 
-default_streamHandler = logging.StreamHandler()
-default_streamHandler.setFormatter(LogFormatter())
-
-logging.root.handlers.clear()
-logging.root.addHandler(default_streamHandler)
-
-
 def getLogger(name, level=logging.DEBUG):
     logger = logging.getLogger(name)
     logger.setLevel(level)

@@ -1,3 +1,4 @@
+horovod
 torch
 tqdm
 tensorflow

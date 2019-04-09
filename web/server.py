@@ -17,6 +17,12 @@ def main():
 
     tornado.options.parse_command_line()
 
+    default_streamHandler = logging.StreamHandler()
+    default_streamHandler.setFormatter(LogFormatter())
+
+    logging.root.handlers.clear()
+    logging.root.addHandler(default_streamHandler)
+
     [i.setFormatter(LogFormatter()) for i in logging.getLogger().handlers]
     http_server = tornado.httpserver.HTTPServer(application)
     http_server.listen(options.port)

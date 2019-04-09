@@ -176,12 +176,7 @@ def get_data(
         bert_tokens.append("[CLS]")
         bert_labels.append("[CLS]")
         orig_tokens = []
-        text = text.replace('\x97', "unk")
-        text = text.replace('\uf076', "unk")
-        text = text.replace("\ue405", "unk")
-        text = text.replace("\ue105", "unk")
-        text = text.replace("\ue415", "unk")
-        text = text.replace('\x07', "unk")
+
         orig_tokens.extend(str(text).split())
         labels = str(labels).split()
         pad_idx = label2idx[pad]
@@ -314,8 +309,6 @@ def get_bert_data_loader_for_predict(path, learner):
 
 # TODO 暂时未用到cls和meta，所以先不考虑
 def split_text(input_text: str, max_seq_len, cls=None, meta=None):
-    import re
-
     replace_chars = [
         '\x97',
         '\uf076',
@@ -416,7 +409,6 @@ def split_text(input_text: str, max_seq_len, cls=None, meta=None):
 @timer
 def single_example_for_predict(input_text, learner):
     # 记录空行的索引，以供插入
-    null_line_marker = []
     clean_text_arr, line_marker = split_text(
         input_text=input_text,
         max_seq_len=learner.data.max_seq_len
@@ -450,7 +442,6 @@ def single_example_for_predict(input_text, learner):
 
     pred_counter = 0
 
-    # print(line_marker)
     for idx, (marker, (pointer_st, pointer_ed)) in enumerate(line_marker):
 
         if pointer_ed != pointer_st:
@@ -550,6 +541,38 @@ class BertNerData(object):
         if cls2idx is not None:
             self.is_cls = True
             self.id2cls = sorted(cls2idx.keys(), key=lambda x: cls2idx[x])
+
+    def reload_dl(self, path, for_train=True):
+        '''
+            重新加载数据集
+        :param path:
+        :param for_train: 是否为了训练
+        :return:
+        '''
+
+        global delimiter
+        df = pd.read_csv(path, delimiter=delimiter)
+        features, label2idx = get_data(
+            df,
+            tokenizer=self.tokenizer,
+            label2idx=self.label2idx,
+            cls2idx=self.cls2idx,
+            is_cls=self.is_cls,
+            max_seq_len=self.max_seq_len,
+            is_meta=self.is_meta
+        )
+
+        f = DataLoaderForPredict if not for_train else DataLoaderForTrain
+        dl = f(
+            features,
+            batch_size=self.batch_size,
+            shuffle=for_train,
+            cuda=self.cuda
+        )
+
+        self.label2idx = label2idx
+
+        return dl
 
     # TODO: write docs
     @classmethod

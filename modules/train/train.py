@@ -7,6 +7,7 @@ from .optimization import BertAdam
 import json
 from modules.data.bert_data import BertNerData
 from modules.models.released_models import released_models
+import horovod.torch as hvd
 
 logging.basicConfig(level=logging.INFO)
 
@@ -209,6 +210,11 @@ class NerLearner(object):
             raise NotImplemented("from_config is implemented only for {} model :(".format(config["name"]))
         model = released_models[name].from_config(**config["model"]["params"])
         return cls(data, model, **config["learner"])
+
+    # 初始化训练环境，主要使用horovod来分布式
+    def init_train_env(self):
+        hvd.init()
+        torch.cuda.set_device(hvd.local_rank())
 
     def fit(self, epochs=100, resume_history=True, target_metric="f1"):
         if not resume_history:
