@@ -30,7 +30,7 @@ def sequence_mask(lens, max_len=None):
 
 class CRF(nn.Module):
     def __init__(self, label_size):
-        super(CRF, self).__init__()
+        super().__init__()
 
         self.label_size = label_size
         self.start = self.label_size - 2

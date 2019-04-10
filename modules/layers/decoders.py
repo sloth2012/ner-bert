@@ -9,7 +9,7 @@ from .ncrf import NCRF
 
 class CRFDecoder(nn.Module):
     def __init__(self, crf, label_size, input_dim, input_dropout=0.5):
-        super(CRFDecoder, self).__init__()
+        super().__init__()
         self.input_dim = input_dim
         self.input_dropout = nn.Dropout(p=input_dropout)
         self.linear = Linears(in_features=input_dim,
@@ -72,7 +72,7 @@ class AttnCRFDecoder(nn.Module):
     def __init__(self,
                  crf, label_size, input_dim, input_dropout=0.5,
                  key_dim=64, val_dim=64, num_heads=3):
-        super(AttnCRFDecoder, self).__init__()
+        super().__init__()
         self.input_dropout = input_dropout
         self.input_dim = input_dim
         self.key_dim = key_dim
@@ -124,7 +124,7 @@ class NMTDecoder(nn.Module):
                  label_size,
                  embedding_dim=64, hidden_dim=256, rnn_layers=1,
                  dropout_p=0.1, pad_idx=0, use_cuda=True):
-        super(NMTDecoder, self).__init__()
+        super().__init__()
         self.slot_size = label_size
         self.pad_idx = pad_idx
         self.embedding_dim = embedding_dim
@@ -245,7 +245,7 @@ class NMTCRFDecoder(nn.Module):
                  label_size, crf,
                  embedding_dim=64, hidden_dim=256, rnn_layers=1,
                  dropout_p=0.1, pad_idx=0, use_cuda=True):
-        super(NMTCRFDecoder, self).__init__()
+        super().__init__()
         self.slot_size = label_size
         self.pad_idx = pad_idx
         self.embedding_dim = embedding_dim
@@ -397,7 +397,7 @@ class AttnCRFJointDecoder(nn.Module):
     def __init__(self,
                  crf, label_size, input_dim, intent_size, input_dropout=0.5,
                  key_dim=64, val_dim=64, num_heads=3):
-        super(AttnCRFJointDecoder, self).__init__()
+        super().__init__()
         self.input_dim = input_dim
         self.attn = MultiHeadAttention(key_dim, val_dim, input_dim, num_heads, input_dropout)
         self.linear = Linears(in_features=input_dim,
@@ -448,7 +448,7 @@ class NMTJointDecoder(nn.Module):
                  label_size, intent_size,
                  embedding_dim=64, hidden_dim=256, rnn_layers=1,
                  dropout_p=0.1, pad_idx=0, use_cuda=True):
-        super(NMTJointDecoder, self).__init__()
+        super().__init__()
         self.slot_size = label_size
         self.intent_size = intent_size
         self.pad_idx = pad_idx
@@ -585,7 +585,7 @@ class AttnNCRFJointDecoder(nn.Module):
     def __init__(self,
                  crf, label_size, input_dim, intent_size, input_dropout=0.5,
                  key_dim=64, val_dim=64, num_heads=3, nbest=8):
-        super(AttnNCRFJointDecoder, self).__init__()
+        super().__init__()
         self.input_dim = input_dim
         self.attn = MultiHeadAttention(key_dim, val_dim, input_dim, num_heads, input_dropout)
         self.linear = Linears(in_features=input_dim,
@@ -659,7 +659,7 @@ class AttnNCRFDecoder(nn.Module):
     def __init__(self,
                  crf, label_size, input_dim, input_dropout=0.5,
                  key_dim=64, val_dim=64, num_heads=3, nbest=8):
-        super(AttnNCRFDecoder, self).__init__()
+        super().__init__()
 
         self.input_dropout = input_dropout
         self.input_dim = input_dim
@@ -722,7 +722,7 @@ class NCRFDecoder(nn.Module):
 
     def __init__(self,
                  crf, label_size, input_dim, input_dropout=0.5, nbest=8):
-        super(NCRFDecoder, self).__init__()
+        super().__init__()
         self.input_dim = input_dim
         self.dropout = nn.Dropout(input_dropout)
         self.linear = Linears(in_features=input_dim,

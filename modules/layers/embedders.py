@@ -30,7 +30,7 @@ class BertEmbedder(nn.Module):
 
     def __init__(self, model, bert_config_file, init_checkpoint_pt,
                  freeze=True, embedding_dim=768, use_cuda=True, bert_mode="weighted", ):
-        super(BertEmbedder, self).__init__()
+        super().__init__()
         self.bert_config_file = bert_config_file
         self.init_checkpoint_pt = init_checkpoint_pt
         self.is_freeze = freeze
@@ -125,7 +125,7 @@ class Word2VecEmbedder(nn.Module):
             trainable=True,
             normalize=True
     ):
-        super(Word2VecEmbedder, self).__init__()
+        super().__init__()
         self.vocab_size = vocab_size
         self.embedding_dim = embedding_dim
         self.model = nn.Embedding(vocab_size, embedding_dim, padding_idx=self.pad_id)
@@ -172,7 +172,7 @@ class Word2VecEmbedder(nn.Module):
 
 class ElmoEmbedder(nn.Module):
     def __init__(self, model, config, embedding_dim=1024, use_cuda=True, elmo_mode="avg"):
-        super(ElmoEmbedder, self).__init__()
+        super().__init__()
         self.model = model
         self.embedding_dim = embedding_dim
         self.model = model

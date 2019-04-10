@@ -73,7 +73,7 @@ class InputFeatures(object):
 class DataLoaderForTrain(DataLoader):
 
     def __init__(self, data_set, w_pad_id, c_pad_id, max_chars, cuda, **kwargs):
-        super(DataLoaderForTrain, self).__init__(
+        super().__init__(
             dataset=data_set,
             collate_fn=self.collate_fn,
             **kwargs
@@ -296,7 +296,7 @@ def get_elmo_data_loaders(train, valid, model_dir, config_name, batch_size, cuda
 class DataLoaderForPredict(DataLoader):
 
     def __init__(self, data_set, w_pad_id, c_pad_id, max_chars, cuda, **kwargs):
-        super(DataLoaderForPredict, self).__init__(
+        super().__init__(
             dataset=data_set,
             collate_fn=self.collate_fn,
             **kwargs

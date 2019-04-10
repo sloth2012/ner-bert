@@ -61,7 +61,7 @@ class InputFeatures(object):
 class DataLoaderForTrain(DataLoader):
 
     def __init__(self, data_set, shuffle, cuda, **kwargs):
-        super(DataLoaderForTrain, self).__init__(
+        super().__init__(
             dataset=data_set,
             collate_fn=self.collate_fn,
             shuffle=shuffle,
@@ -99,7 +99,7 @@ class DataLoaderForTrain(DataLoader):
 class DataLoaderForPredict(DataLoader):
 
     def __init__(self, data_set, cuda, **kwargs):
-        super(DataLoaderForPredict, self).__init__(
+        super().__init__(
             dataset=data_set,
             collate_fn=self.collate_fn,
             **kwargs

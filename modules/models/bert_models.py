@@ -11,7 +11,7 @@ class NerModel(nn.Module, metaclass=abc.ABCMeta):
     """Base class for all Models"""
 
     def __init__(self, encoder, decoder, use_cuda=True):
-        super(NerModel, self).__init__()
+        super().__init__()
         self.encoder = encoder
         self.decoder = decoder
         self.use_cuda = use_cuda and torch.cuda.is_available()

@@ -38,7 +38,7 @@ def log_sum_exp(vec, m_size):
 class NCRF(nn.Module):
 
     def __init__(self, tagset_size, gpu):
-        super(NCRF, self).__init__()
+        super().__init__()
         print("build CRF...")
         self.gpu = gpu and torch.cuda.is_available()
         # Matrix of transition parameters.  Entry i,j is the score of transitioning *to* i *from* j.

@@ -11,7 +11,7 @@ class Linear(nn.Linear):
                  in_features: int,
                  out_features: int,
                  bias: bool = True):
-        super(Linear, self).__init__(in_features, out_features, bias=bias)
+        super().__init__(in_features, out_features, bias=bias)
         init.orthogonal_(self.weight)
 
 
@@ -22,7 +22,7 @@ class Linears(nn.Module):
                  hiddens,
                  bias=True,
                  activation='tanh'):
-        super(Linears, self).__init__()
+        super().__init__()
         assert len(hiddens) > 0
 
         self.in_features = in_features
@@ -46,7 +46,7 @@ class Linears(nn.Module):
 # Reused from https://github.com/JayParks/transformer/
 class ScaledDotProductAttention(nn.Module):
     def __init__(self, d_k, dropout=.1):
-        super(ScaledDotProductAttention, self).__init__()
+        super().__init__()
         self.scale_factor = np.sqrt(d_k)
         self.softmax = nn.Softmax(dim=-1)
         self.dropout = nn.Dropout(dropout)
@@ -69,7 +69,7 @@ class ScaledDotProductAttention(nn.Module):
 
 class LayerNormalization(nn.Module):
     def __init__(self, d_hid, eps=1e-3):
-        super(LayerNormalization, self).__init__()
+        super().__init__()
         self.gamma = nn.Parameter(torch.ones(d_hid), requires_grad=True)
         self.beta = nn.Parameter(torch.zeros(d_hid), requires_grad=True)
         self.eps = eps
@@ -85,7 +85,7 @@ class LayerNormalization(nn.Module):
 
 class _MultiHeadAttention(nn.Module):
     def __init__(self, d_k, d_v, d_model, n_heads, dropout):
-        super(_MultiHeadAttention, self).__init__()
+        super().__init__()
         self.d_k = d_k
         self.d_v = d_v
         self.d_model = d_model
@@ -123,7 +123,7 @@ class _MultiHeadAttention(nn.Module):
 
 class MultiHeadAttention(nn.Module):
     def __init__(self, d_k, d_v, d_model, n_heads, dropout):
-        super(MultiHeadAttention, self).__init__()
+        super().__init__()
         self.attention = _MultiHeadAttention(d_k, d_v, d_model, n_heads, dropout)
         self.proj = Linear(n_heads * d_v, d_model)
         self.dropout = nn.Dropout(dropout)
@@ -147,7 +147,7 @@ class MultiHeadAttention(nn.Module):
 
 class _BahdanauAttention(nn.Module):
     def __init__(self, method, hidden_size):
-        super(_BahdanauAttention, self).__init__()
+        super().__init__()
         self.method = method
         self.hidden_size = hidden_size
         self.attn = nn.Linear(self.hidden_size * 2, hidden_size)
@@ -195,7 +195,7 @@ class BahdanauAttention(nn.Module):
     """Reused from https://github.com/chrisbangun/pytorch-seq2seq_with_attention/"""
 
     def __init__(self, hidden_dim=128, query_dim=128, memory_dim=128):
-        super(BahdanauAttention, self).__init__()
+        super().__init__()
 
         self.hidden_dim = hidden_dim
         self.query_dim = query_dim

@@ -6,7 +6,7 @@ from tornado import log
 
 class LogFormatter(log.LogFormatter):
     def __init__(self):
-        super(LogFormatter, self).__init__(
+        super().__init__(
             fmt='%(color)s[%(asctime)s %(filename)s:%(funcName)s:%(lineno)d %(levelname)s]%(end_color)s %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S'
         )

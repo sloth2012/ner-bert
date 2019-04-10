@@ -116,7 +116,7 @@ class BERTLayerNorm(nn.Module):
     def __init__(self, config, variance_epsilon=1e-12):
         """Construct a layernorm module in the TF style (epsilon inside the square root).
         """
-        super(BERTLayerNorm, self).__init__()
+        super().__init__()
         self.gamma = nn.Parameter(torch.ones(config.hidden_size))
         self.beta = nn.Parameter(torch.zeros(config.hidden_size))
         self.variance_epsilon = variance_epsilon
@@ -130,7 +130,7 @@ class BERTLayerNorm(nn.Module):
 
 class BERTEmbeddings(nn.Module):
     def __init__(self, config):
-        super(BERTEmbeddings, self).__init__()
+        super().__init__()
         """Construct the embedding module from word, position and token_type embeddings.
         """
         self.word_embeddings = nn.Embedding(config.vocab_size, config.hidden_size)
@@ -161,7 +161,7 @@ class BERTEmbeddings(nn.Module):
 
 class BERTSelfAttention(nn.Module):
     def __init__(self, config):
-        super(BERTSelfAttention, self).__init__()
+        super().__init__()
         if config.hidden_size % config.num_attention_heads != 0:
             raise ValueError(
                 "The hidden size (%d) is not a multiple of the number of attention "
@@ -212,7 +212,7 @@ class BERTSelfAttention(nn.Module):
 
 class BERTSelfOutput(nn.Module):
     def __init__(self, config):
-        super(BERTSelfOutput, self).__init__()
+        super().__init__()
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         self.LayerNorm = BERTLayerNorm(config)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
@@ -226,7 +226,7 @@ class BERTSelfOutput(nn.Module):
 
 class BERTAttention(nn.Module):
     def __init__(self, config):
-        super(BERTAttention, self).__init__()
+        super().__init__()
         self.self = BERTSelfAttention(config)
         self.output = BERTSelfOutput(config)
 
@@ -238,7 +238,7 @@ class BERTAttention(nn.Module):
 
 class BERTIntermediate(nn.Module):
     def __init__(self, config):
-        super(BERTIntermediate, self).__init__()
+        super().__init__()
         self.dense = nn.Linear(config.hidden_size, config.intermediate_size)
         self.intermediate_act_fn = gelu
 
@@ -250,7 +250,7 @@ class BERTIntermediate(nn.Module):
 
 class BERTOutput(nn.Module):
     def __init__(self, config):
-        super(BERTOutput, self).__init__()
+        super().__init__()
         self.dense = nn.Linear(config.intermediate_size, config.hidden_size)
         self.LayerNorm = BERTLayerNorm(config)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
@@ -264,7 +264,7 @@ class BERTOutput(nn.Module):
 
 class BERTLayer(nn.Module):
     def __init__(self, config):
-        super(BERTLayer, self).__init__()
+        super().__init__()
         self.attention = BERTAttention(config)
         self.intermediate = BERTIntermediate(config)
         self.output = BERTOutput(config)
@@ -278,7 +278,7 @@ class BERTLayer(nn.Module):
 
 class BERTEncoder(nn.Module):
     def __init__(self, config):
-        super(BERTEncoder, self).__init__()
+        super().__init__()
         layer = BERTLayer(config)
         self.layer = nn.ModuleList([copy.deepcopy(layer) for _ in range(config.num_hidden_layers)])
 
@@ -292,7 +292,7 @@ class BERTEncoder(nn.Module):
 
 class BERTPooler(nn.Module):
     def __init__(self, config):
-        super(BERTPooler, self).__init__()
+        super().__init__()
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         self.activation = nn.Tanh()
 
@@ -329,7 +329,7 @@ class BertModel(nn.Module):
         Args:
             config: `BertConfig` instance.
         """
-        super(BertModel, self).__init__()
+        super().__init__()
         self.embeddings = BERTEmbeddings(config)
         self.encoder = BERTEncoder(config)
         self.pooler = BERTPooler(config)
@@ -385,7 +385,7 @@ class BertForSequenceClassification(nn.Module):
     """
 
     def __init__(self, config, num_labels):
-        super(BertForSequenceClassification, self).__init__()
+        super().__init__()
         self.bert = BertModel(config)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.classifier = nn.Linear(config.hidden_size, num_labels)
@@ -437,7 +437,7 @@ class BertForQuestionAnswering(nn.Module):
     """
 
     def __init__(self, config):
-        super(BertForQuestionAnswering, self).__init__()
+        super().__init__()
         self.bert = BertModel(config)
         # TODO check with Google if it's normal there is no dropout on the token classifier of SQuAD in the TF version
         # self.dropout = nn.Dropout(config.hidden_dropout_prob)

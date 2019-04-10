@@ -20,7 +20,7 @@ class BertBiLSTMEncoder(nn.Module):
 
     def __init__(self, embeddings,
                  hidden_dim=128, rnn_layers=1, use_cuda=True):
-        super(BertBiLSTMEncoder, self).__init__()
+        super().__init__()
         self.embeddings = embeddings
         self.hidden_dim = hidden_dim
         self.rnn_layers = rnn_layers
@@ -79,7 +79,7 @@ class ElmoBiLSTMEncoder(nn.Module):
 
     def __init__(self, embeddings,
                  hidden_dim=128, rnn_layers=1, use_cuda=True):
-        super(ElmoBiLSTMEncoder, self).__init__()
+        super().__init__()
         self.embeddings = embeddings
         self.hidden_dim = hidden_dim
         self.rnn_layers = rnn_layers
@@ -130,7 +130,7 @@ class BertMetaBiLSTMEncoder(nn.Module):
 
     def __init__(self, embeddings, meta_dim,
                  hidden_dim=128, rnn_layers=1, use_cuda=True):
-        super(BertMetaBiLSTMEncoder, self).__init__()
+        super().__init__()
         self.embeddings = embeddings
         self.hidden_dim = hidden_dim
         self.rnn_layers = rnn_layers

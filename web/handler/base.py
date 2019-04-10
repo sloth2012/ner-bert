@@ -8,7 +8,7 @@ class ApiBaseHandler(web.RequestHandler):
     name = 'Base'
 
     def __init__(self, application, request, **kwargs):
-        super(ApiBaseHandler, self).__init__(application, request, **kwargs)
+        super().__init__(application, request, **kwargs)
         self.logger = getLogger(self.name)
 
 
@@ -17,7 +17,7 @@ class WebsocketApiBaseHandler(websocket.WebSocketHandler):
     clients = set()
 
     def __init__(self, application, request, **kwargs):
-        super(WebsocketApiBaseHandler, self).__init__(application, request, **kwargs)
+        super().__init__(application, request, **kwargs)
         self.logger = getLogger(self.name)
 
     def check_origin(self, origin):
