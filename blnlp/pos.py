@@ -1,5 +1,9 @@
 # coding: utf8
 from . import settings
+from . import dictionary
+from collections import defaultdict
+
+_DICTIONARY = dictionary.Dictionary()
 
 
 class PosTagger:
@@ -8,11 +12,11 @@ class PosTagger:
         self.learner = None
         self.init_env()
 
-    def cut(self, text):
-        if not text:
-            raise Exception('Empty Input Text!')
+    def cut(self, text, ignore=False):
         from modules.data.bert_data import single_example_for_predict
 
+        # TODO 接收list类型输入
+        # text = self._check_input(text, ignore)
         res = single_example_for_predict(text, learner=self.learner)
 
         return res
@@ -39,3 +43,81 @@ class PosTagger:
             self.learner = released_models.recover_from_config(config, for_train=False)
             self.learner.load_model()
 
+    @staticmethod
+    def _check_input(text, ignore=False):
+        if not text:
+            return []
+
+        if not isinstance(text, list):
+            text = [text]
+
+        null_index = [i for i, t in enumerate(text) if not t]
+        if null_index and not ignore:
+            raise Exception("null text in input ")
+
+        return text
+
+    @staticmethod
+    def load_userdict(path):
+        _DICTIONARY.add_dict(path)
+
+    @staticmethod
+    def delete_userdict():
+        _DICTIONARY.delete_dict()
+
+    def lexerCustom(self, text):
+        pos_words = self.cut(text)
+
+        if _DICTIONARY.sizes != 0:
+            pos_words = self._merge_user_words(text, pos_words)
+
+        return pos_words
+
+
+    @staticmethod
+    def _merge_user_words(text, seg_results):
+        if not _DICTIONARY:
+            return seg_results
+
+        matchs = _DICTIONARY.parse_words(text)
+        graph = defaultdict(lambda: defaultdict(tuple))
+
+        text_len = len(text)
+
+        for i in range(text_len):
+            graph[i][i + 1] = (1.0, dictionary._UNKNOWN_LABEL)
+
+        index = 0
+
+        for w, p in seg_results:
+            w_len = len(w)
+            graph[index][index + w_len] = (_DICTIONARY.get_weight(w) + w_len, p)
+            index += w_len
+
+        for m in matchs:
+            graph[m.start][m.end] = (
+                _DICTIONARY.get_weight(m.keyword) * len(m.keyword),
+                _DICTIONARY.get_label(m.keyword)
+            )
+
+        route = {}
+        route[text_len] = (0, 0, dictionary._UNKNOWN_LABEL)
+
+        for idx in range(text_len - 1, -1, -1):
+            m = [((graph.get(idx).get(k)[0] + route[k][0]), k, graph.get(idx).get(k)[1]) for k in graph.get(idx).keys()]
+            mm = max(m)
+            route[idx] = mm
+
+        index = 0
+        path = [index]
+        words = []
+
+        while index < text_len:
+            ind_y = route[index][1]
+            path.append(ind_y)
+            word = text[index:ind_y]
+            label = route[index][2]
+            words.append((word, label))
+            index = ind_y
+
+        return words

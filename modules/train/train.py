@@ -242,7 +242,7 @@ class NerLearner(object):
             logging.info("on epoch {} by max_{}: {}".format(idx, target_metric, metric))
             print(self.history[-1])
             if self.data.is_cls:
-                logging.info("on epoch {} classification report:")
+                logging.info(f"on epoch {epoch} classification report:")
                 print(self.cls_history[-1])
         # Store best model
         if self.best_target_metric < metric:
