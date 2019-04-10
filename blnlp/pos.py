@@ -13,11 +13,17 @@ class PosTagger:
         self.init_env()
 
     def cut(self, text, ignore=False):
-        from modules.data.bert_data import single_example_for_predict
+        '''
+
+        :param text: list或单个字符串
+        :param ignore:
+        :return:
+        '''
+        from modules.data.bert_data import text_array_for_predict
 
         # TODO 接收list类型输入
-        # text = self._check_input(text, ignore)
-        res = single_example_for_predict(text, learner=self.learner)
+        text = self._check_input(text, ignore)
+        res = text_array_for_predict(text, learner=self.learner)
 
         return res
 
@@ -66,11 +72,15 @@ class PosTagger:
         _DICTIONARY.delete_dict()
 
     def lexerCustom(self, text):
-        pos_words = self.cut(text)
+        all_words = self.cut(text)
 
+        pos_words = []
         if _DICTIONARY.sizes != 0:
-            pos_words = self._merge_user_words(text, pos_words)
-
+            for sent, words in zip(text, all_words):
+                words = self._merge_user_words(sent, words)
+                pos_words.append(words)
+        else:
+            pos_words = all_words
         return pos_words
 
 
@@ -110,14 +120,14 @@ class PosTagger:
 
         index = 0
         path = [index]
-        words = []
+        pos_words = []
 
         while index < text_len:
             ind_y = route[index][1]
             path.append(ind_y)
             word = text[index:ind_y]
             label = route[index][2]
-            words.append((word, label))
+            pos_words.append((word, label))
             index = ind_y
 
-        return words
+        return pos_words

@@ -308,7 +308,7 @@ def get_bert_data_loader_for_predict(path, learner):
 
 
 # TODO 暂时未用到cls和meta，所以先不考虑
-def split_text(input_text: str, max_seq_len, cls=None, meta=None):
+def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
     replace_chars = [
         '\x97',
         '\uf076',
@@ -324,93 +324,95 @@ def split_text(input_text: str, max_seq_len, cls=None, meta=None):
 
     punctuation = ',，.。：:！;! '
 
-    # 记录一些索引，用于还原。元组，第一个0表示为换行，1表示直接追加；第二个参数表示起始位置
+    # 记录一些索引，用于还原。三元组，第一个元素：文本在输入list中的索引；第二个元素：0表示为换行，1表示直接追加；第三个元素：表示起始位置；
+    # 这里三元组用于将各个输入的字符串数组进行分解组织，以供后续还原
     line_marker = []
-
-    # 设置两个指针，进行符合长度的串的提取
-    pointer_st = 0
-    pointer_ed = 0
-    last_valid_punc_pos = -1
 
     clean_text_arr = []
 
-    text_list = list(input_text)
-    for i, ch in enumerate(text_list):
-        if ch in replace_chars:
-            text_list[i] = 'unk'
+    for idx, input_text in enumerate(input_text_arr):
+        # 设置两个指针，进行符合长度的串的提取
+        pointer_st = 0
+        pointer_ed = 0
+        last_valid_punc_pos = -1
 
-        if (pointer_ed - pointer_st) > max_seq_len:
-            if last_valid_punc_pos == -1:
-                valid_text_list = text_list[pointer_st:pointer_ed]
+        text_list = list(input_text)
+        for i, ch in enumerate(text_list):
+            if ch in replace_chars:
+                text_list[i] = 'unk'
 
-                clean_text_arr.append((
-                    ' '.join(valid_text_list),
-                    ' '.join('O' * len(valid_text_list))
-                ))
+            if (pointer_ed - pointer_st) > max_seq_len:
+                if last_valid_punc_pos == -1:
+                    valid_text_list = text_list[pointer_st:pointer_ed]
 
-                line_marker.append((
-                    1, (pointer_st, pointer_ed)
-                ))
-                pointer_st = pointer_ed
-
-            else:
-                ed = last_valid_punc_pos + 1
-                valid_text_list = text_list[pointer_st:ed]
-
-                clean_text_arr.append((
-                    ' '.join(valid_text_list),
-                    ' '.join('O' * len(valid_text_list))
-                ))
-
-                line_marker.append((
-                    1, (pointer_st, ed)
-                ))
-                pointer_st = ed
-
-            last_valid_punc_pos = -1
-
-        else:
-            if ch == '\n':
-                valid_text_list = text_list[pointer_st: i]
-                if len(valid_text_list) != 0:
                     clean_text_arr.append((
                         ' '.join(valid_text_list),
                         ' '.join('O' * len(valid_text_list))
                     ))
 
-                line_marker.append((
-                    0, (pointer_st, i)
-                ))
-                pointer_st = i + 1
+                    line_marker.append((
+                        idx, 1, (pointer_st, pointer_ed)
+                    ))
+                    pointer_st = pointer_ed
+
+                else:
+                    ed = last_valid_punc_pos + 1
+                    valid_text_list = text_list[pointer_st:ed]
+
+                    clean_text_arr.append((
+                        ' '.join(valid_text_list),
+                        ' '.join('O' * len(valid_text_list))
+                    ))
+
+                    line_marker.append((
+                        idx, 1, (pointer_st, ed)
+                    ))
+                    pointer_st = ed
 
                 last_valid_punc_pos = -1
 
-            elif ch in punctuation:
-                last_valid_punc_pos = i
+            else:
+                if ch == '\n':
+                    valid_text_list = text_list[pointer_st: i]
+                    if len(valid_text_list) != 0:
+                        clean_text_arr.append((
+                            ' '.join(valid_text_list),
+                            ' '.join('O' * len(valid_text_list))
+                        ))
 
-        pointer_ed = i + 1
+                    line_marker.append((
+                        idx, 0, (pointer_st, i)
+                    ))
+                    pointer_st = i + 1
 
-    if pointer_st != pointer_ed:
-        valid_text_list = text_list[pointer_st: pointer_ed]
-        if len(valid_text_list) != 0:
-            clean_text_arr.append((
-                ' '.join(valid_text_list),
-                ' '.join('O' * len(valid_text_list))
-            ))
+                    last_valid_punc_pos = -1
 
-            line_marker.append((
-                1, (pointer_st, pointer_ed)
-            ))
+                elif ch in punctuation:
+                    last_valid_punc_pos = i
+
+            pointer_ed = i + 1
+
+        if pointer_st != pointer_ed:
+            valid_text_list = text_list[pointer_st: pointer_ed]
+            if len(valid_text_list) != 0:
+                clean_text_arr.append((
+                    ' '.join(valid_text_list),
+                    ' '.join('O' * len(valid_text_list))
+                ))
+
+                line_marker.append((
+                    idx, 1, (pointer_st, pointer_ed)
+                ))
 
     return clean_text_arr, line_marker
 
 
 # 先主要针对中文序列标注（单字），转换空格。一篇文本，不含换行符号
 @timer
-def single_example_for_predict(input_text, learner):
+def text_array_for_predict(input_text_arr, learner):
     # 记录空行的索引，以供插入
     clean_text_arr, line_marker = split_text(
-        input_text=input_text,
+        input_text_arr=input_text_arr,
         max_seq_len=learner.data.max_seq_len
     )
 
@@ -439,10 +441,18 @@ def single_example_for_predict(input_text, learner):
     span_preds = tokens2spans(tokens, labels)
 
     results = []
-
     pred_counter = 0
 
-    for idx, (marker, (pointer_st, pointer_ed)) in enumerate(line_marker):
+    result = []
+    input_text = ''
+    last_index = -1
+    for idx, (arr_index, marker, (pointer_st, pointer_ed)) in enumerate(line_marker):
+        if arr_index != last_index:
+            input_text = input_text_arr[arr_index]
+
+            if last_index != -1:
+                results.append(result)
+                result = []
 
         if pointer_ed != pointer_st:
             # 下边为恢复机制
@@ -491,12 +501,18 @@ def single_example_for_predict(input_text, learner):
                 if tok_st < tok_size:
                     raise Exception('识别边界出错')
 
-                results.append((text[valid_st: st], lab))
+                result.append((text[valid_st: st], lab))
 
             pred_counter += 1
 
         if marker == 0:
-            results.append(('\n', 'w'))
+            result.append(('\n', 'w'))
+
+        last_index = arr_index
+
+    if len(result) != 0:
+        results.append(result)
+
     return results
 
 
