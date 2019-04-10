@@ -12,7 +12,6 @@ from elmoformanylangs.frontend import Model
 
 # TODO: add from_config to other embedders
 class BertEmbedder(nn.Module):
-
     # @property
     def get_config(self):
         config = {
@@ -98,8 +97,13 @@ class BertEmbedder(nn.Module):
 
     @classmethod
     def create(cls,
-               bert_config_file, init_checkpoint_pt, embedding_dim=768, use_cuda=True, bert_mode="weighted",
-               freeze=True):
+               bert_config_file,
+               init_checkpoint_pt,
+               embedding_dim=768,
+               use_cuda=True,
+               bert_mode="weighted",
+               freeze=True
+               ):
         bert_config = bert_modeling.BertConfig.from_json_file(bert_config_file)
         model = bert_modeling.BertModel(bert_config)
         if use_cuda and torch.cuda.is_available():
@@ -108,7 +112,13 @@ class BertEmbedder(nn.Module):
         else:
             map_location = "cpu"
             device = torch.device("cpu")
-        model.load_state_dict(torch.load(init_checkpoint_pt, map_location=map_location))
+
+        model_dict = torch.load(init_checkpoint_pt, map_location=map_location)
+        pretrained_dict = {
+            k: v for k, v in model.state_dict().items()
+            if k in model_dict
+        }
+        model.load_state_dict(pretrained_dict)
         model = model.to(device)
         model = cls(model=model, embedding_dim=embedding_dim, use_cuda=use_cuda, bert_mode=bert_mode,
                     bert_config_file=bert_config_file, init_checkpoint_pt=init_checkpoint_pt, freeze=freeze)

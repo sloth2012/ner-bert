@@ -3,7 +3,6 @@ from modules.layers.decoders import *
 from modules.layers.embedders import *
 import abc
 import sys
-from .released_models import released_models
 import torch
 
 
@@ -62,8 +61,15 @@ class NerModel(nn.Module, metaclass=abc.ABCMeta):
 
     @classmethod
     def from_config(cls, config):
-        encoder = released_models["encoder"].from_config(**config["encoder"]["params"])
-        decoder = released_models["decoder"].from_config(**config["decoder"]["params"])
+        import sys
+        current_modules = sys.modules[__name__]
+
+        encoder_config = config['encoder']
+        encoder = getattr(current_modules, encoder_config['name']).from_config(encoder_config['params'])
+
+        decoder_config = config['decoder']
+        decoder = getattr(current_modules, decoder_config['name']).from_config(decoder_config['params'])
+
         return cls(encoder, decoder, config["use_cuda"])
 
 

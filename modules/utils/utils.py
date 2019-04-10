@@ -111,3 +111,18 @@ def encode_position(pos, emb_dim=10):
     # apply cos on 1st,3rd,5th...emb_dim
     position_enc[1::2] = np.cos(position_enc[1::2])
     return list(position_enc.reshape(-1))
+
+
+def recover_model_from_config(config: dict):
+    # TODO 这里先只用bert
+    from modules.models import bert_models
+
+    if not isinstance(config, dict) or 'name' not in config:
+        return config
+
+    model_type = getattr(bert_models, config['name'])
+
+    return model_type.from_config(config['params'])
+
+
+

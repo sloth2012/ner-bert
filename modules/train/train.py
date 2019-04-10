@@ -5,8 +5,6 @@ import torch
 from modules.utils.plot_metrics import get_mean_max_metric
 from .optimization import BertAdam
 import json
-from modules.data.bert_data import BertNerData
-from modules.models.released_models import released_models
 
 logging.basicConfig(level=logging.INFO)
 
@@ -199,16 +197,26 @@ class NerLearner(object):
             )
 
     @classmethod
-    def from_config(cls, path, for_train=True):
-        with open(path, "r") as file:
-            config = json.load(file)
-        data = BertNerData.from_config(config["data"], for_train)
-        name = config["model"]["name"]
-        # TODO: release all models (now only for BertBiLSTMNCRF)
-        if name not in released_models:
-            raise NotImplemented("from_config is implemented only for {} model :(".format(config["name"]))
-        model = released_models[name].from_config(**config["model"]["params"])
-        return cls(data, model, **config["learner"])
+    def from_config(cls, config, for_train=True):
+        '''
+        :param path: config or path string.
+        :param for_train:
+        :return:
+        '''
+
+        if isinstance(config, str):
+            import json
+            with open(config, "r") as file:
+                config = json.load(file)
+
+        from modules.data import bert_data
+        data = bert_data.BertNerData.from_config(config["data"], for_train)
+        model_config = config["model"]
+
+        from modules.utils import utils
+        model = utils.recover_model_from_config(model_config)
+
+        return cls(model=model, data=data, **config["learner"])
 
     def fit(self, epochs=100, resume_history=True, target_metric="f1"):
         if not resume_history:
