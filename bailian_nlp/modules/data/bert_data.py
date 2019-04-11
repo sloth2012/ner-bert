@@ -319,6 +319,7 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
         '\x7f',
         '\u3000',
         '\xa0',
+        '\u2005'
         ' '
     ]
 
@@ -338,7 +339,7 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
 
         text_list = list(input_text)
         for i, ch in enumerate(text_list):
-            if ch in replace_chars:
+            if ch in replace_chars or ch.isspace():
                 text_list[i] = 'unk'
 
             if (pointer_ed - pointer_st) > max_seq_len:

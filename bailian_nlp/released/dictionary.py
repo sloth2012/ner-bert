@@ -6,10 +6,12 @@ from . import trie
 # 未知标签
 _UNKNOWN_LABEL = 'xx'
 
+
 class Dictionary():
     '''
         自定义词典，逗号分隔
     '''
+
     def __init__(self):
         self.trie = trie.Trie()
         self.weights = {}
@@ -36,7 +38,7 @@ class Dictionary():
                 self.trie.add_keyword(word)
 
                 weight = 1.0
-                label = _UNKNOWN_LABEL # 表示未知
+                label = _UNKNOWN_LABEL  # 表示未知
 
                 if len(linelist) == 2:
                     try:
@@ -64,4 +66,3 @@ class Dictionary():
 
     def get_label(self, word):
         return self.labels.get(word, _UNKNOWN_LABEL)
-
