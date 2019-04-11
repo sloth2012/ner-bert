@@ -18,17 +18,9 @@ class PosTaggerHandler(ApiBaseHandler):
 
         else:
             try:
-                from ...released.models import pos_tagger
-
-                # result = pos_tagger.cut(text)
-
-                from aip import AipNlp
-
-                client = AipNlp('11310322','YZS97m5TCvhNkVhaB1IiDcI7','b8GOkRyIY2SGO9ytewCI35wjaGPHLu6K')
-                result = client.lexerCustom(text)
-
-                # import jieba.posseg as psg
-                # result = [(w.word, w.flag) for w in psg.cut(text)]
+                from ...released.pos import PosTagger
+                pos_tagger = PosTagger()
+                result = pos_tagger.lexerCustom(text)
 
                 self.write({
                     'status': 'success',

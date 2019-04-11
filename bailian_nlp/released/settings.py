@@ -22,4 +22,5 @@ POS_DATA_DIR = os.path.join(root_dir, 'datadrive/bailian')
 DEFAULT_POS_TRAIN_FILE = os.path.join(POS_DATA_DIR, 'pos/train.csv')
 DEFAULT_POS_VALID_FILE = os.path.join(POS_DATA_DIR, 'pos/valid.csv')
 
-
+# 默认自定义词典
+DEFAULT_USER_DICT = os.path.join(root_dir, 'datadrive/dict/user_dict.txt')

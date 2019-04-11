@@ -104,6 +104,8 @@ class Trie(object):
 
         while new_current_state is None and current_state.deepth != 0:
             current_state = current_state.failure
+            if current_state is None:
+                break
             new_current_state = current_state.next_state(word)
 
         return new_current_state

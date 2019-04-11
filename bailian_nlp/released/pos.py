@@ -5,16 +5,24 @@ from ..web.utils.logger import getLogger
 
 _DICTIONARY = dictionary.Dictionary()
 
+has_load_default = False
+
 
 class PosTagger:
     def __init__(
             self,
             config_file=None
     ):
+        global has_load_default
         self.config_file = config_file
         self.learner = None
 
         self.logger = getLogger(__name__)
+
+        if not has_load_default:
+            self.logger.info(f'load default user_dict in {settings.DEFAULT_USER_DICT}')
+            _DICTIONARY.add_dict(settings.DEFAULT_USER_DICT)
+            has_load_default = True
 
         self.init_env()
 
@@ -50,7 +58,6 @@ class PosTagger:
         from bailian_nlp.modules.train import train
         if self.config_file is not None:
             self.learner = train.NerLearner.from_config(self.config_file, for_train=for_train)
-
         else:
             mapping = {
                 'train_path': settings.DEFAULT_POS_TRAIN_FILE,
