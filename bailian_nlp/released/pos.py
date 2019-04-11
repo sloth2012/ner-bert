@@ -39,6 +39,7 @@ class PosTagger:
                 self.learner.load_model(path)
                 self.logger.info('pos model loads success!')
             except Exception as e:
+                self.logger.error('pos model loads fail!!')
                 self.logger.error(e, exc_info=True)
                 raise
 
