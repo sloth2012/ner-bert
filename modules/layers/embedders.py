@@ -48,7 +48,30 @@ class BertEmbedder(nn.Module):
 
     @classmethod
     def from_config(cls, config):
-        return cls.create(**config)
+        return cls.recover(**config)
+
+    # 恢复模型时，pretrain的会自动恢复，不用在初始化加载
+    @classmethod
+    def recover(
+            cls,
+            bert_config_file,
+            init_checkpoint_pt,
+            embedding_dim=768,
+            use_cuda=True,
+            bert_mode="weighted",
+            freeze=True
+            ):
+
+        bert_config = bert_modeling.BertConfig.from_json_file(bert_config_file)
+        model = bert_modeling.BertModel(bert_config)
+
+        model = cls(model=model, embedding_dim=embedding_dim, use_cuda=use_cuda, bert_mode=bert_mode,
+                    bert_config_file=bert_config_file, init_checkpoint_pt=init_checkpoint_pt, freeze=freeze)
+
+        if freeze:
+            model.freeze()
+
+        return model
 
     def init_weights(self):
         if self.bert_mode == "weighted":
@@ -113,12 +136,7 @@ class BertEmbedder(nn.Module):
             map_location = "cpu"
             device = torch.device("cpu")
 
-        model_dict = torch.load(init_checkpoint_pt, map_location=map_location)
-        pretrained_dict = {
-            k: v for k, v in model.state_dict().items()
-            if k in model_dict
-        }
-        model.load_state_dict(pretrained_dict)
+        model.load_state_dict(torch.load(init_checkpoint_pt, map_location=map_location))
         model = model.to(device)
         model = cls(model=model, embedding_dim=embedding_dim, use_cuda=use_cuda, bert_mode=bert_mode,
                     bert_config_file=bert_config_file, init_checkpoint_pt=init_checkpoint_pt, freeze=freeze)

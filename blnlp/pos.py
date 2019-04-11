@@ -27,10 +27,10 @@ class PosTagger:
 
         return res
 
-    def init_env(self):
+    def init_env(self, for_train=False):
         from modules.train import train
         if self.config_file is not None:
-            self.learner = train.NerLearner.from_config(self.config_file, for_train=False)
+            self.learner = train.NerLearner.from_config(self.config_file, for_train=for_train)
             self.learner.load_model()
 
         else:
@@ -46,7 +46,7 @@ class PosTagger:
             from .utils import valid_config
             config = valid_config(settings.DEFAULT_POS_MODEL_CONFIG_FILE, mapping)
 
-            self.learner = train.NerLearner.from_config(config, for_train=False)
+            self.learner = train.NerLearner.from_config(config, for_train=for_train)
             self.learner.load_model()
 
     @staticmethod
