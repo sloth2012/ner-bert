@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from tqdm.auto import tqdm
 import json
-from ..web.utils.common import timer
+from bailian_nlp.web.utils.common import timer
 
 delimiter = '△△△'
 

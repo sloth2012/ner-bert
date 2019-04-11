@@ -1,6 +1,7 @@
 # coding: utf8
 from . import dictionary, settings
 from collections import defaultdict
+from ..web.utils.logger import getLogger
 
 _DICTIONARY = dictionary.Dictionary()
 
@@ -9,6 +10,9 @@ class PosTagger:
     def __init__(self, config_file=None):
         self.config_file = config_file
         self.learner = None
+
+        self.logger = getLogger(__name__)
+
         self.init_env()
 
     def cut(self, text, ignore=False):
@@ -18,7 +22,7 @@ class PosTagger:
         :param ignore:
         :return:
         '''
-        from bailian_nlp.data.bert_data import text_array_for_predict
+        from bailian_nlp.modules.data.bert_data import text_array_for_predict
 
         # TODO 接收list类型输入
         text = self._check_input(text, ignore)
@@ -26,11 +30,22 @@ class PosTagger:
 
         return res
 
+    def load_model(self, path):
+        if self.learner is None:
+            self.logger.error('please init pos model first!')
+        else:
+            self.logger.info(f'loadding model file in {path}')
+            try:
+                self.learner.load_model(path)
+                self.logger.info('pos model loads success!')
+            except Exception as e:
+                self.logger.error(e, exc_info=True)
+                raise
+
     def init_env(self, for_train=False):
-        from ..train import train
+        from bailian_nlp.modules.train import train
         if self.config_file is not None:
             self.learner = train.NerLearner.from_config(self.config_file, for_train=for_train)
-            self.learner.load_model()
 
         else:
             mapping = {
@@ -46,7 +61,15 @@ class PosTagger:
             config = valid_config(settings.DEFAULT_POS_MODEL_CONFIG_FILE, mapping)
 
             self.learner = train.NerLearner.from_config(config, for_train=for_train)
+
+        import os
+        if os.path.exists(self.learner.best_model_path):
+            self.logger.info(f'found pos model file in {self.learner.best_model_path}')
             self.learner.load_model()
+            self.logger.info('pos model loads success!')
+
+        else:
+            self.logger.warning(f'no model file found!')
 
     @staticmethod
     def _check_input(text, ignore=False):
@@ -81,7 +104,6 @@ class PosTagger:
         else:
             pos_words = all_words
         return pos_words
-
 
     @staticmethod
     def _merge_user_words(text, seg_results):

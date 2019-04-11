@@ -6,4 +6,5 @@ pandas
 numpy
 six
 gensim
-elmoformanylangs
+git+https://github.com/HIT-SCIR/ELMoForManyLangs
+matplotlib

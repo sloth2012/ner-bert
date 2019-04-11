@@ -2,7 +2,9 @@
 import os
 
 root_dir, _ = os.path.split(os.path.realpath(__file__))
-root_dir = os.path.dirname(root_dir)
+
+for i in range(1):
+    root_dir = os.path.dirname(root_dir)
 
 MODEL_DIR = os.path.join(root_dir, 'datadrive/models')
 CHINESE_MODEL_DIR = os.path.join(MODEL_DIR, 'chinese_L-12_H-768_A-12')

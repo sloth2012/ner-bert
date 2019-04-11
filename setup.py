@@ -8,19 +8,23 @@ setup(
     description="百炼NLP包",
     version='0.1',
     packages=find_packages(
-        exclude=[
-            'examples',
-            'examples_elmo',
-            'exps',
-            'datadrive'
+        include=[
+            "datadrive",
+            "bailian_nlp"
         ]
     ),
     package_data={
-        'bailian_nlp': [
+        '': [
             'datadrive/models/chinese_L-12_H-768_A-12/pos.bin',
             'datadrive/models/chinese_L-12_H-768_A-12/pos.json',
             'datadrive/models/chinese_L-12_H-768_A-12/vocab.json',
             'datadrive/models/chinese_L-12_H-768_A-12/bert_config.json'
-        ]
+        ],
+        # 'bailian_nlp': [
+        #     'datadrive/models/chinese_L-12_H-768_A-12/pos.bin',
+        #     'datadrive/models/chinese_L-12_H-768_A-12/pos.json',
+        #     'datadrive/models/chinese_L-12_H-768_A-12/vocab.json',
+        #     'datadrive/models/chinese_L-12_H-768_A-12/bert_config.json'
+        # ]
     }
 )
