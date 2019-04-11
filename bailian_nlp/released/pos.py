@@ -131,7 +131,7 @@ class PosTagger:
 
         for m in matchs:
             graph[m.start][m.end] = (
-                _DICTIONARY.get_weight(m.keyword) * len(m.keyword),
+                _DICTIONARY.get_weight(m.keyword) * (len(m.keyword) + 1),  # 加1平滑下
                 _DICTIONARY.get_label(m.keyword)
             )
 
