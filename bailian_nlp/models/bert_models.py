@@ -1,6 +1,6 @@
-from modules.layers.encoders import *
-from modules.layers.decoders import *
-from modules.layers.embedders import *
+from ..layers.encoders import *
+from ..layers.decoders import *
+from ..layers.embedders import *
 import abc
 import sys
 import torch

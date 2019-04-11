@@ -117,4 +117,4 @@ venv.bak/
 .mypy_cache/
 .DS_Store
 
-datadrive
+bailian_nlp/datadrive

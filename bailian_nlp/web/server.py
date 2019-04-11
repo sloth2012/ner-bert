@@ -11,8 +11,8 @@ define("port", default=50010, help="run on th given port", type=int)
 
 
 def main():
-    from web.utils.logger import getLogger, LogFormatter
-    from web.application import application
+    from .utils.logger import getLogger, LogFormatter
+    from .application import application
     logger = getLogger('server')
 
     tornado.options.parse_command_line()

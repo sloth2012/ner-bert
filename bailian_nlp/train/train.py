@@ -2,7 +2,7 @@ from tqdm.auto import tqdm
 from sklearn_crfsuite.metrics import flat_classification_report
 import logging
 import torch
-from modules.utils.plot_metrics import get_mean_max_metric
+from ..utils.plot_metrics import get_mean_max_metric
 from .optimization import BertAdam
 import json
 
@@ -209,11 +209,11 @@ class NerLearner(object):
             with open(config, "r") as file:
                 config = json.load(file)
 
-        from modules.data import bert_data
+        from ..data import bert_data
         data = bert_data.BertNerData.from_config(config["data"], for_train)
         model_config = config["model"]
 
-        from modules.utils import utils
+        from ..utils import utils
         model = utils.recover_model_from_config(model_config)
 
         return cls(model=model, data=data, **config["learner"])

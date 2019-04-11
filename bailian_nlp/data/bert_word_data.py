@@ -1,4 +1,4 @@
-from modules.data import tokenization
+from . import tokenization
 import pandas as pd
 from tqdm.auto import tqdm
 import json

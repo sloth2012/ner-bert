@@ -1,6 +1,5 @@
 # coding: utf8
-from . import settings
-from . import dictionary
+from . import dictionary, settings
 from collections import defaultdict
 
 _DICTIONARY = dictionary.Dictionary()
@@ -19,7 +18,7 @@ class PosTagger:
         :param ignore:
         :return:
         '''
-        from modules.data.bert_data import text_array_for_predict
+        from bailian_nlp.data.bert_data import text_array_for_predict
 
         # TODO 接收list类型输入
         text = self._check_input(text, ignore)
@@ -28,7 +27,7 @@ class PosTagger:
         return res
 
     def init_env(self, for_train=False):
-        from modules.train import train
+        from ..train import train
         if self.config_file is not None:
             self.learner = train.NerLearner.from_config(self.config_file, for_train=for_train)
             self.learner.load_model()

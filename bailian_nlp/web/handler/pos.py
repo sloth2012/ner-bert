@@ -18,7 +18,7 @@ class PosTaggerHandler(ApiBaseHandler):
 
         else:
             try:
-                from blnlp.models import pos_tagger
+                from ...released.models import pos_tagger
 
                 # result = pos_tagger.cut(text)
 

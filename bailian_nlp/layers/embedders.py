@@ -1,4 +1,4 @@
-from modules.layers import bert_modeling
+from . import bert_modeling
 import torch
 from gensim.models import KeyedVectors
 import os

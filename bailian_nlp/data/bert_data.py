@@ -1,11 +1,11 @@
 from torch.utils.data import DataLoader
-from modules.data import tokenization
+from . import tokenization
 import torch
 import pandas as pd
 import numpy as np
 from tqdm.auto import tqdm
 import json
-from web.utils.common import timer
+from ..web.utils.common import timer
 
 delimiter = '△△△'
 
@@ -435,7 +435,7 @@ def text_array_for_predict(input_text_arr, learner):
     # 此处耗时较多
     preds = learner.predict(dl)
 
-    from modules.utils.utils import bert_labels2tokens, first_choicer, tokens2spans
+    from ..utils.utils import bert_labels2tokens, first_choicer, tokens2spans
 
     tokens, labels = bert_labels2tokens(dl, preds, fn=first_choicer)
     span_preds = tokens2spans(tokens, labels)
