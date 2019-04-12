@@ -2,6 +2,7 @@
 from . import dictionary, settings
 from collections import defaultdict
 from ..web.utils.logger import getLogger
+import os
 
 _DICTIONARY = dictionary.Dictionary()
 
@@ -20,9 +21,10 @@ class PosTagger:
         self.logger = getLogger(__name__)
 
         if not has_load_default:
-            self.logger.info(f'load default user_dict in {settings.DEFAULT_USER_DICT}')
-            _DICTIONARY.add_dict(settings.DEFAULT_USER_DICT)
-            has_load_default = True
+            if os.path.exists(settings.DEFAULT_USER_DICT):
+                self.logger.info(f'load default user_dict in {settings.DEFAULT_USER_DICT}')
+                _DICTIONARY.add_dict(settings.DEFAULT_USER_DICT)
+                has_load_default = True
 
         self.init_env()
 
@@ -104,7 +106,8 @@ class PosTagger:
     def delete_userdict():
         _DICTIONARY.delete_dict()
 
-    def lexerCustom(self, text):
+    def lexerCustom(self, text, ignore=False):
+        text = self._check_input(text, ignore)
         all_words = self.cut(text)
 
         pos_words = []

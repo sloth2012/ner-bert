@@ -11,8 +11,8 @@ define("port", default=50010, help="run on th given port", type=int)
 
 
 def main():
-    from .utils.logger import getLogger, LogFormatter
-    from .application import application
+    from bailian_nlp.web.utils.logger import getLogger, LogFormatter
+    from bailian_nlp.web.application import application
     logger = getLogger('server')
 
     tornado.options.parse_command_line()
