@@ -9,6 +9,9 @@ class PosTaggerHandler(ApiBaseHandler):
     name = 'PosTagger'
     pos_tagger = PosTagger()
 
+    async def post(self, *args, **kwargs):
+        return await self.get(*args, **kwargs)
+
     @timer
     async def get(self, *args, **kwargs):
         text = self.get_argument('text', None)
