@@ -1,6 +1,4 @@
-from .modules.models.bert_models import BertBiLSTMCRF
-from .modules.train.train import NerLearner
-from .modules.data.bert_data import BertNerData
+from .modules import NerLearner, BertNerData, BertBiLSTMCRF
 from .released.pos import PosTagger
 
 
