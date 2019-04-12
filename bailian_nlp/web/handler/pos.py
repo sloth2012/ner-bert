@@ -14,7 +14,7 @@ class PosTaggerHandler(ApiBaseHandler):
 
     @timer
     async def get(self, *args, **kwargs):
-        text = self.get_argument('text', None)
+        text = self.get_argument('text', None, strip=False)
 
         if text is None:
             self.write({
