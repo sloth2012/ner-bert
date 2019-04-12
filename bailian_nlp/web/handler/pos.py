@@ -2,9 +2,12 @@
 from .base import ApiBaseHandler
 from ..utils.common import timer
 
+from ...released.pos import PosTagger
+
 
 class PosTaggerHandler(ApiBaseHandler):
     name = 'PosTagger'
+    pos_tagger = PosTagger()
 
     @timer
     async def get(self, *args, **kwargs):
@@ -18,9 +21,7 @@ class PosTaggerHandler(ApiBaseHandler):
 
         else:
             try:
-                from ...released.pos import PosTagger
-                pos_tagger = PosTagger()
-                result = pos_tagger.lexerCustom(text)
+                result = self.pos_tagger.lexerCustom(text)
 
                 self.write({
                     'status': 'success',
