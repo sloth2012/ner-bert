@@ -28,17 +28,18 @@ class PosTagger:
 
         self.init_env()
 
-    def cut(self, text, ignore=False):
+    def cut(self, text, ignore=False, checked=False):
         '''
 
         :param text: list或单个字符串
         :param ignore:
+        :param checked: 是否校验过
         :return:
         '''
         from bailian_nlp.modules.data.bert_data import text_array_for_predict
 
-        # TODO 接收list类型输入
-        text = self._check_input(text, ignore)
+        if not checked:
+            text = self._check_input(text, ignore)
         res = text_array_for_predict(text, learner=self.learner)
 
         return res
@@ -108,7 +109,7 @@ class PosTagger:
 
     def lexerCustom(self, text, ignore=False):
         text = self._check_input(text, ignore)
-        all_words = self.cut(text)
+        all_words = self.cut(text, checked=True)
 
         pos_words = []
         if _DICTIONARY.sizes != 0:
