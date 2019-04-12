@@ -28,7 +28,7 @@ class PosTaggerHandler(ApiBaseHandler):
 
                 self.write({
                     'status': 'success',
-                    'result': result
+                    'result': result[0]
                 })
 
             except Exception as e:
