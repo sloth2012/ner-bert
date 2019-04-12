@@ -39,6 +39,8 @@ if __name__ == "__main__":
 
     curPath = os.path.abspath(os.path.dirname(__file__))
     rootPath = os.path.split(curPath)[0]
+    for i in range(1):
+        rootPath = os.path.dirname(rootPath)
     sys.path.insert(0, rootPath)
 
     urllib3.disable_warnings()
