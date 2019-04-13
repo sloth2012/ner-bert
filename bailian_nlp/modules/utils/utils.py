@@ -125,4 +125,3 @@ def recover_model_from_config(config: dict):
     return model_type.from_config(config['params'])
 
 
-

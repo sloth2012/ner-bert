@@ -123,6 +123,7 @@ def build_pos_train_and_valid_data():
 
     delimiter = '△△△'
 
+    # 注意这里的逻辑需要和modules.bert_data中预测预处理的的split_text函数中的一致
     replace_chars = [
         '\x97',
         '\uf076',
@@ -133,6 +134,7 @@ def build_pos_train_and_valid_data():
         '\x7f',
         '\u3000',
         '\xa0',
+        '\u2005'
         ' '
     ]
     with open(seg_file) as fin1, \
