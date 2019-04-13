@@ -81,7 +81,7 @@ def tokens2spans_(tokens_, labels_):
                 span_label = None
             idx_ += 1
             while idx_ < len(labels_) and labels_[idx_] not in ["I_O", "B_O", "O"] \
-                    and labels_[idx_].split("_")[0] == "I":
+                    and labels_[idx_].split("_")[0] in ["I", "E"]:
                 if span_label == labels_[idx_].split("_")[1]:
                     span.append(tokens_[idx_])
                     idx_ += 1

@@ -183,15 +183,12 @@ def get_data(
         assert len(orig_tokens) == len(labels)
         prev_label = ""
         for idx_, (orig_token, label) in enumerate(zip(orig_tokens, labels)):
+            # 20190413：结构改变，改成BIE机构。
             # Fix BIO to IO as BERT proposed https://arxiv.org/pdf/1810.04805.pdf
             prefix = "B_"
             if label != "O":
-                label = label.split("_")[1]
-                if label == prev_label:
-                    prefix = "I_"
-                prev_label = label
-            else:
-                prev_label = label
+                prefix, label = label.split("_")
+                prefix += '_'
 
             cur_tokens = tokenizer.tokenize(orig_token)
             if max_seq_len - 1 < len(bert_tokens) + len(cur_tokens):
