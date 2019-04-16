@@ -63,6 +63,7 @@ def transformed_result(preds, mask, id2label, target_all=None, pad_idx=0):
     if target_all is not None:
         return preds_cpu, targets_cpu
     else:
+
         return preds_cpu
 
 
@@ -121,14 +122,17 @@ def predict(dl, model, id2label, id2cls=None):
         bs = batch[0].shape[0]
         unsorted_mask = [0] * bs
         unsorted_pred = [0] * bs
+
         for idx, sidx in enumerate(sorted_idx):
             unsorted_pred[sidx] = preds[idx]
             unsorted_mask[sidx] = labels_mask[idx]
 
         preds_cpu_ = transformed_result([unsorted_pred], [unsorted_mask], id2label)
+
         preds_cpu.extend(preds_cpu_)
     if id2cls is not None:
         return preds_cpu, preds_cpu_cls
+
     return preds_cpu
 
 

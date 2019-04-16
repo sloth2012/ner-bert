@@ -51,19 +51,26 @@ def first_choicer(tok_map, labels):
 def bert_labels2tokens(dl, labels, fn=voting_choicer):
     res_tokens = []
     res_labels = []
+
     for f, l in zip(dl.dataset, labels):
         label = fn(f.tok_map, l)
 
         res_tokens.append(f.tokens[1:])
         res_labels.append(label[1:])
+
     return res_tokens, res_labels
 
 
 def tokens2spans_(tokens_, labels_):
     res = []
     idx_ = 0
+
+    # for i, (t, l) in enumerate(zip(tokens_, labels_)):
+    #     print(i, t, l)
+
     while idx_ < len(labels_):
         label = labels_[idx_]
+
         if label in ["I_O", "B_O", "O"]:
             res.append((tokens_[idx_], "O"))
             idx_ += 1

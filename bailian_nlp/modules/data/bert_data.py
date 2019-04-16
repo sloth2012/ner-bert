@@ -179,6 +179,7 @@ def get_data(
 
         orig_tokens.extend(str(text).split())
         labels = str(labels).split()
+
         pad_idx = label2idx[pad]
         assert len(orig_tokens) == len(labels)
 
@@ -237,6 +238,7 @@ def get_data(
             cls_idx = cls2idx[cls]
         if is_meta:
             meta = meta_tokens
+
         features.append(InputFeatures(
             # Bert data
             bert_tokens=bert_tokens,
@@ -403,7 +405,6 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
                     idx, 1, (pointer_st, pointer_ed)
                 ))
 
-    print(clean_text_arr)
     return clean_text_arr, line_marker
 
 
@@ -413,7 +414,7 @@ def text_array_for_predict(input_text_arr, learner):
     # 记录空行的索引，以供插入
     clean_text_arr, line_marker = split_text(
         input_text_arr=input_text_arr,
-        max_seq_len=learner.data.max_seq_len
+        max_seq_len=learner.data.max_seq_len - 2
     )
 
     df = pd.DataFrame(clean_text_arr, columns=['1', '0'])
