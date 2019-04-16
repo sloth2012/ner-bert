@@ -117,6 +117,8 @@ def build_pos_train_and_valid_data():
 
     seg_file = os.path.join(data_dir, 'final_baidu-23w.txt')
     fake_file = os.path.join(data_dir, 'fake.txt')
+    special_file = os.path.join(data_dir, 'special.txt')
+    dict_file = os.path.join(data_dir, 'single.txt')
 
     train_path = os.path.join(data_dir, 'pos/train.csv')
     valid_path = os.path.join(data_dir, 'pos/valid.csv')
@@ -139,14 +141,16 @@ def build_pos_train_and_valid_data():
     ]
     with open(seg_file) as fin1, \
             open(fake_file) as fin2, \
+            open(special_file) as fin3, \
+            open(dict_file, 'w') as fin4, \
             open(train_path, 'w') as train_f, \
             open(valid_path, 'w') as valid_f:
 
         train_f.write(f'0{delimiter}1\n')
         valid_f.write(f'0{delimiter}1\n')
 
-        fins = [fin1, fin2]
-        for fin in fins:
+        fins = [fin1, fin2, fin3, fin4]
+        for k, fin in enumerate(fins):
             for line in fin:
                 line = line.strip()
                 if not line:
@@ -155,11 +159,19 @@ def build_pos_train_and_valid_data():
                 import random
                 score = random.random()
 
-                fout = train_f if score > 0.006 else valid_f
+                if k < 2:
+                    fout = train_f if score > 0.006 else valid_f
+                else:
+                    fout = train_f
                 words = []
                 flags = []
                 for word, flag in p.findall(line):
-                    char_list = ['unk' if c in replace_chars or c.isspace() else c for c in list(word)]
+                    from bailian_nlp.modules.data.tokenization import _is_control
+
+                    char_list = [
+                        'unk' if c in replace_chars or c.isspace() or _is_control(c) else c for c in
+                        list(word)
+                    ]
 
                     char_size = len(char_list)
                     if char_size == 1:
@@ -188,5 +200,121 @@ def build_pos_train_and_valid_data():
                 fout.write('\n')
 
 
+def build_pos_single_data_from_hanlp_dict():
+    '''
+    通过hanlp的一些词典构造语料，主要用于训练单个单词的样本
+    :return:
+    '''
+
+    root_dir, _ = os.path.split(os.path.realpath(__file__))
+    data_dir = os.path.join(os.path.dirname(root_dir), 'datadrive/bailian')
+
+    single_file = os.path.join(data_dir, 'single.txt')
+
+    hanlp_dict_dir = '/Users/lx/Programs/research/HanLP/data/dictionary'
+
+    custom_file = os.path.join(hanlp_dict_dir, 'custom/CustomDictionary.txt')
+    nt_file = os.path.join(hanlp_dict_dir, 'custom/机构名词典.txt')
+    additional_file = os.path.join(hanlp_dict_dir, 'custom/现代汉语补充词库.txt')
+    core_file = os.path.join(hanlp_dict_dir, 'CoreNatureDictionary.txt')
+
+    # hanlp的词性转成目前百度相对于的词性，可能会自定义一些。暂时只列一些专门的映射
+    pos_mapping = {
+        'n': 'n',  # 名词
+        'f': 'f',  # 方位名词
+        's': 's',  # 处所名词
+        't': 't',  # 时间名词
+        'nr': 'nr',  # 人名
+        'ns': 'ns',  # 地名
+        'nt': 'nt',  # 机构团体名
+        'nw': 'nw',  # 作品名，暂无此映射
+        'nz': 'nz',  # 其它专名
+        'v': 'v',  # 动词
+        'vd': 'vd',  # 动副词
+        'vn': 'vn',  # 动名词
+        'a': 'a',  # 形容词
+        'ad': 'ad',  # 副形词,
+        'an': 'an',  # 名形词,
+        'd': 'd',  # 副词
+        'm': 'm',  # 数词
+        'q': 'q',  # 量词
+        'r': 'r',  # 代词
+        'p': 'p',  # 介词
+        'c': 'c',  # 连词
+        'u': 'u',  # 助词
+        'xc': 'xc',  # 其它虚词, 无此映射
+        'w': 'w',  # 标点符号
+
+        # 下边为hanlp独有的
+        'i': 'i',  # 成语
+        'l': 'l',  # 习用语
+        'xu': 'xu',  # 网址
+        'j': 'j',  # 简称略语
+        'nnt': 'ti',  # 职务职称,
+        'nrf': 'nr',  # 音译人名
+        'nrj': 'nr',  # 日语人名
+        'ntc': 'nt',  # 公司名
+        'ntcb': 'nt',  # 银行
+        'ntcf': 'nt',  # 工厂
+        'ntch': 'nt',  # 酒店宾馆
+        'nth': 'nt',  # 医院
+        'nto': 'nt',  # 政府机构
+        'nts': 'nt',  # 中小学
+        'nxu': 'nt',  # 大学
+        'nit': 'nt',  # 教育相关机构,
+        'nm': 'n',  # 物品名
+        'nmc': 'n',  # 化学用品
+        'nnd': 'n',  # 职业
+        'ni': 'n',  # 机构相关
+        'nh': 'n',  # 医疗疾病相关名词
+        'nhd': 'n',  # 疾病
+        'nhm': 'n',  # 药品
+        'nic': 'n',  # 下属机构
+        'nf': 'n',  # 食品
+        'nba': 'n',  # 动物名
+        'nb': 'n',  # 生物名
+        'nbp': 'n',  # 植物名
+
+    }
+
+    with open(single_file, 'w') as fout, \
+            open(custom_file) as fin1, \
+            open(nt_file) as fin2, \
+            open(additional_file) as fin3, \
+            open(core_file) as fin4:
+
+        for fin in [
+            fin1,
+            fin2,
+            fin3,
+            fin4
+        ]:
+            for line in fin:
+                line = line.strip()
+                if not line:
+                    continue
+
+                linelist = line.split()
+                length = len(linelist)
+                if length % 2 == 0:
+                    continue
+
+                length = length // 2
+                for i in range(length):
+                    flag = pos_mapping.get(linelist[i * 2 + 1])
+
+                    word = linelist[0].strip()
+
+                    if not word or not flag:
+                        continue
+
+                    from bailian_nlp.modules.data.tokenization import _is_control
+                    if len(word) == 1 and _is_control(word):
+                        break
+                    fout.write(f'{word}/{flag}\n')
+
+
 if __name__ == '__main__':
-    build_pos_fake_data()
+    # build_pos_fake_data()
+
+    build_pos_single_data_from_hanlp_dict()

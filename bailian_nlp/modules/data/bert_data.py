@@ -181,7 +181,7 @@ def get_data(
         labels = str(labels).split()
         pad_idx = label2idx[pad]
         assert len(orig_tokens) == len(labels)
-        prev_label = ""
+
         for idx_, (orig_token, label) in enumerate(zip(orig_tokens, labels)):
             # 20190413：结构改变，改成BIE机构。
             # Fix BIO to IO as BERT proposed https://arxiv.org/pdf/1810.04805.pdf
@@ -258,7 +258,7 @@ def get_data(
         assert len(input_ids) == len(input_mask)
         assert len(input_ids) == len(input_type_ids)
         if len(input_ids) != len(labels_ids):
-            print(len(input_ids), len(labels_ids), orig_tokens, labels)
+            print(len(input_ids), len(labels_ids), bert_tokens, labels)
             raise Exception('len(input_ids) != len(labels_ids):')
         assert len(input_ids) == len(labels_mask)
     if is_cls:
@@ -320,7 +320,7 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
         ' '
     ]
 
-    punctuation = ',，.。：:！;! '
+    punctuation = ',，.。：:！;!'
 
     # 记录一些索引，用于还原。三元组，第一个元素：文本在输入list中的索引；第二个元素：0表示为换行，1表示直接追加；第三个元素：表示起始位置；
     # 这里三元组用于将各个输入的字符串数组进行分解组织，以供后续还原
@@ -336,7 +336,8 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
 
         text_list = list(input_text)
         for i, ch in enumerate(text_list):
-            if ch in replace_chars or ch.isspace():
+            from .tokenization import _is_control
+            if ch in replace_chars or ch.isspace() or _is_control(ch):
                 text_list[i] = 'unk'
 
             if (pointer_ed - pointer_st) > max_seq_len:
@@ -402,6 +403,7 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
                     idx, 1, (pointer_st, pointer_ed)
                 ))
 
+    print(clean_text_arr)
     return clean_text_arr, line_marker
 
 

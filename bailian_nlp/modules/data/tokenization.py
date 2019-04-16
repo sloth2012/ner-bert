@@ -186,6 +186,7 @@ class BasicTokenizer(object):
                 output.append(" ")
             else:
                 output.append(char)
+
         return "".join(output)
 
 

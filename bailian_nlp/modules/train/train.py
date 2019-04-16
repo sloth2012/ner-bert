@@ -169,7 +169,6 @@ class NerLearner(object):
         self.lr = lr
         self.betas = betas
         self.clip = clip
-        self.sup_labels = sup_labels
         self.t_total = t_total
         self.warmup = warmup
         self.weight_decay = weight_decay
