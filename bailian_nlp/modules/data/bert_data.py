@@ -420,8 +420,8 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
     # print('line_marker', line_marker)
     # print('unk_marker', unk_marker)
 
-    for k, v in clean_text_arr:
-        print(len(k), len(v))
+    # for k, v in clean_text_arr:
+    #     print(len(k), len(v))
 
     return clean_text_arr, line_marker, unk_marker
 
