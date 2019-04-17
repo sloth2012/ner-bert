@@ -6,8 +6,7 @@ import numpy as np
 from tqdm.auto import tqdm
 import json
 from bailian_nlp.web.utils.common import timer
-
-delimiter = '△△△'
+from ..settings import delimiter, UNKNOWN_CHAR
 
 
 class InputFeatures(object):
@@ -270,7 +269,6 @@ def get_data(
 
 def get_bert_data_loaders(train, valid, vocab_file, batch_size=16, cuda=True, is_cls=False,
                           do_lower_case=False, max_seq_len=424, is_meta=False, label2idx=None, cls2idx=None):
-    global delimiter
     train = pd.read_csv(train, delimiter=delimiter)
     valid = pd.read_csv(valid, delimiter=delimiter)
 
@@ -293,7 +291,6 @@ def get_bert_data_loaders(train, valid, vocab_file, batch_size=16, cuda=True, is
 
 
 def get_bert_data_loader_for_predict(path, learner):
-    global delimiter
     df = pd.read_csv(path, delimiter=delimiter)
     f, _ = get_data(df, tokenizer=learner.data.tokenizer,
                     label2idx=learner.data.label2idx, cls2idx=learner.data.cls2idx,
@@ -307,7 +304,7 @@ def get_bert_data_loader_for_predict(path, learner):
 
 
 # TODO 暂时未用到cls和meta，所以先不考虑
-def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
+def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None, unkown_token_size=2):
     replace_chars = [
         '\x97',
         '\uf076',
@@ -328,9 +325,15 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
     # 这里三元组用于将各个输入的字符串数组进行分解组织，以供后续还原
     line_marker = []
 
+    # 未知标签剔除（这里主要是空格）
+    unknown_marker = []
+
     clean_text_arr = []
 
     for idx, input_text in enumerate(input_text_arr):
+        # 一些unknown token会多占位，因此需要考虑进行处理
+        reduce_size = 0
+
         # 设置两个指针，进行符合长度的串的提取
         pointer_st = 0
         pointer_ed = 0
@@ -340,9 +343,10 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
         for i, ch in enumerate(text_list):
             from .tokenization import _is_control
             if ch in replace_chars or ch.isspace() or _is_control(ch):
-                text_list[i] = 'unk'
+                text_list[i] = UNKNOWN_CHAR
+                reduce_size += unkown_token_size - 1
 
-            if (pointer_ed - pointer_st) > max_seq_len:
+            if (pointer_ed - pointer_st) >= max_seq_len - reduce_size:
                 if last_valid_punc_pos == -1:
                     valid_text_list = text_list[pointer_st:pointer_ed]
 
@@ -355,7 +359,6 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
                         idx, 1, (pointer_st, pointer_ed)
                     ))
                     pointer_st = pointer_ed
-
                 else:
                     ed = last_valid_punc_pos + 1
                     valid_text_list = text_list[pointer_st:ed]
@@ -371,6 +374,7 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
                     pointer_st = ed
 
                 last_valid_punc_pos = -1
+                reduce_size = 0
 
             else:
                 if ch == '\n':
@@ -387,7 +391,7 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
                     pointer_st = i + 1
 
                     last_valid_punc_pos = -1
-
+                    reduce_size = 0
                 elif ch in punctuation:
                     last_valid_punc_pos = i
 
@@ -414,11 +418,13 @@ def text_array_for_predict(input_text_arr, learner):
     # 记录空行的索引，以供插入
     clean_text_arr, line_marker = split_text(
         input_text_arr=input_text_arr,
-        max_seq_len=learner.data.max_seq_len - 2
+        max_seq_len=learner.data.max_seq_len - 3,  # 减3是因为可能会扩展
+        unkown_token_size=learner.data.unknown_token_size
     )
 
     df = pd.DataFrame(clean_text_arr, columns=['1', '0'])
     # print(repr(df.values[0][0]), repr(df.values[0][1]))
+
     f, _ = get_data(
         df,
         tokenizer=learner.data.tokenizer,
@@ -474,16 +480,16 @@ def text_array_for_predict(input_text_arr, learner):
                         continue
                     if text[st] != token[tok_st]:
                         # 标记为unk
-                        tok_ed1 = tok_st + 3
+                        tok_ed1 = tok_st + len(UNKNOWN_CHAR)
                         if tok_ed1 > tok_size:
                             # print('err:', token, lab, token[tok_st:tok_ed1])
-                            raise Exception('边界识别错误:unk')
+                            raise Exception(f'边界识别错误:{UNKNOWN_CHAR}')
 
-                        if token[tok_st:tok_ed1] == 'unk':
+                        if token[tok_st:tok_ed1] == UNKNOWN_CHAR:
                             tok_st = tok_ed1
                             st += 1
                         else:
-                            # 标记为[UNK]
+                            # 标记为[UNK]，这个是系统默认的
                             tok_ed2 = tok_st + 5
                             if tok_ed2 > tok_size:
                                 raise Exception('边界识别错误1:[UNK]')
@@ -559,6 +565,9 @@ class BertNerData(object):
             self.is_cls = True
             self.id2cls = sorted(cls2idx.keys(), key=lambda x: cls2idx[x])
 
+        # 无意义填充字符占位长度（在max_seq_len中）
+        self.unknown_token_size = len(self.tokenizer.tokenize(UNKNOWN_CHAR))
+
     def reload_dl(self, path, for_train=True):
         '''
             重新加载数据集
@@ -567,7 +576,6 @@ class BertNerData(object):
         :return:
         '''
 
-        global delimiter
         df = pd.read_csv(path, delimiter=delimiter)
         features, label2idx = get_data(
             df,
