@@ -324,10 +324,6 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None, unkown_tok
     # 记录一些索引，用于还原。三元组，第一个元素：文本在输入list中的索引；第二个元素：0表示为换行，1表示直接追加；第三个元素：表示起始位置；
     # 这里三元组用于将各个输入的字符串数组进行分解组织，以供后续还原
     line_marker = []
-
-    # 未知标签剔除（这里主要是空格）
-    unknown_marker = []
-
     clean_text_arr = []
 
     for idx, input_text in enumerate(input_text_arr):
@@ -342,11 +338,11 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None, unkown_tok
         text_list = list(input_text)
         for i, ch in enumerate(text_list):
             from .tokenization import _is_control
-            if ch in replace_chars or ch.isspace() or _is_control(ch):
+            if ch in replace_chars or (ch.isspace() and ch != '\n') or _is_control(ch):
                 text_list[i] = UNKNOWN_CHAR
                 reduce_size += unkown_token_size - 1
 
-            if (pointer_ed - pointer_st) >= max_seq_len - reduce_size:
+            if (pointer_ed - pointer_st) > max_seq_len - reduce_size:
                 if last_valid_punc_pos == -1:
                     valid_text_list = text_list[pointer_st:pointer_ed]
 
@@ -358,6 +354,7 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None, unkown_tok
                     line_marker.append((
                         idx, 1, (pointer_st, pointer_ed)
                     ))
+
                     pointer_st = pointer_ed
                 else:
                     ed = last_valid_punc_pos + 1
@@ -392,8 +389,9 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None, unkown_tok
 
                     last_valid_punc_pos = -1
                     reduce_size = 0
-                elif ch in punctuation:
-                    last_valid_punc_pos = i
+
+            if ch in punctuation:
+                last_valid_punc_pos = i
 
             pointer_ed = i + 1
 
@@ -418,7 +416,7 @@ def text_array_for_predict(input_text_arr, learner):
     # 记录空行的索引，以供插入
     clean_text_arr, line_marker = split_text(
         input_text_arr=input_text_arr,
-        max_seq_len=learner.data.max_seq_len - 3,  # 减3是因为可能会扩展
+        max_seq_len=learner.data.max_seq_len - 5,  # 减num是因为可能会扩展
         unkown_token_size=learner.data.unknown_token_size
     )
 

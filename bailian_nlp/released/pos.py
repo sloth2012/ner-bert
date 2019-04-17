@@ -137,6 +137,8 @@ class PosTagger:
 
         for w, p in seg_results:
             w_len = len(w)
+
+            # print(w, p, index, index + w_len)
             graph[index][index + w_len] = (_DICTIONARY.get_weight(w) + w_len, p)
             index += w_len
 
@@ -151,7 +153,13 @@ class PosTagger:
 
         for idx in range(text_len - 1, -1, -1):
             m = [((graph.get(idx).get(k)[0] + route[k][0]), k, graph.get(idx).get(k)[1]) for k in graph.get(idx).keys()]
+
+            # print('**************')
+            # for i, j, k in m:
+            #     print(text[j - 1], i, k)
+
             mm = max(m)
+            # print(idx, text[idx], mm)
             route[idx] = mm
 
         index = 0
@@ -163,6 +171,7 @@ class PosTagger:
             path.append(ind_y)
             word = text[index:ind_y]
             label = route[index][2]
+
             pos_words.append((word, label))
             index = ind_y
 

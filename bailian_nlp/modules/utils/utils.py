@@ -65,8 +65,8 @@ def tokens2spans_(tokens_, labels_):
     res = []
     idx_ = 0
 
-    for i, (t, l) in enumerate(zip(tokens_, labels_)):
-        print(i, t, l)
+    # for i, (t, l) in enumerate(zip(tokens_, labels_)):
+    #     print(i, t, l)
 
     while idx_ < len(labels_):
         label = labels_[idx_]
