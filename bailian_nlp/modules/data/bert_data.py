@@ -335,10 +335,11 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None, unkown_tok
         pointer_ed = 0
         last_valid_punc_pos = -1
 
-        text_list = list(input_text)
-        for i, ch in enumerate(text_list):
+        text_list = []
+        for i, ch in enumerate(input_text):
             from .tokenization import _is_control
-            if ch in replace_chars or (ch.isspace() and ch != '\n') or _is_control(ch):
+            cp = ord(ch)
+            if ch in replace_chars or (ch.isspace() and ch != '\n') or (cp == 0 or cp == 0xfffd or _is_control(ch)):
                 text_list[i] = UNKNOWN_CHAR
                 reduce_size += unkown_token_size - 1
 
