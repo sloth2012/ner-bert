@@ -304,7 +304,7 @@ def get_bert_data_loader_for_predict(path, learner):
 
 
 # TODO 暂时未用到cls和meta，所以先不考虑
-def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None, unkown_token_size=2):
+def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
     replace_chars = [
         '\x97',
         '\uf076',
@@ -326,26 +326,21 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None, unkown_tok
     line_marker = []
     clean_text_arr = []
 
+    from collections import defaultdict
+    unk_marker = defaultdict(lambda: defaultdict(str))
     for idx, input_text in enumerate(input_text_arr):
-        # 一些unknown token会多占位，因此需要考虑进行处理
-        reduce_size = 0
-
         # 设置两个指针，进行符合长度的串的提取
         pointer_st = 0
         pointer_ed = 0
         last_valid_punc_pos = -1
 
         text_list = []
-        for i, ch in enumerate(input_text):
-            from .tokenization import _is_control
-            cp = ord(ch)
-            if ch in replace_chars or (ch.isspace() and ch != '\n') or (cp == 0 or cp == 0xfffd or _is_control(ch)):
-                text_list[i] = UNKNOWN_CHAR
-                reduce_size += unkown_token_size - 1
 
-            if (pointer_ed - pointer_st) > max_seq_len - reduce_size:
+        unk_counter = 0
+        for i, ch in enumerate(input_text):
+            if len(text_list) > max_seq_len:
                 if last_valid_punc_pos == -1:
-                    valid_text_list = text_list[pointer_st:pointer_ed]
+                    valid_text_list = text_list
 
                     clean_text_arr.append((
                         ' '.join(valid_text_list),
@@ -357,26 +352,29 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None, unkown_tok
                     ))
 
                     pointer_st = pointer_ed
+                    text_list = []
                 else:
                     ed = last_valid_punc_pos + 1
-                    valid_text_list = text_list[pointer_st:ed]
+                    valid_text_list = text_list[:ed]
 
                     clean_text_arr.append((
                         ' '.join(valid_text_list),
                         ' '.join('O' * len(valid_text_list))
                     ))
 
+                    text_list = text_list[ed:]
+
+                    ed += unk_counter
                     line_marker.append((
                         idx, 1, (pointer_st, ed)
                     ))
                     pointer_st = ed
 
                 last_valid_punc_pos = -1
-                reduce_size = 0
 
             else:
                 if ch == '\n':
-                    valid_text_list = text_list[pointer_st: i]
+                    valid_text_list = text_list
                     if len(valid_text_list) != 0:
                         clean_text_arr.append((
                             ' '.join(valid_text_list),
@@ -389,15 +387,25 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None, unkown_tok
                     pointer_st = i + 1
 
                     last_valid_punc_pos = -1
-                    reduce_size = 0
+                    text_list = []
 
             if ch in punctuation:
-                last_valid_punc_pos = i
+                last_valid_punc_pos = len(text_list)
+
+            from .tokenization import _is_control
+            cp = ord(ch)
+            if ch in replace_chars or ch.isspace() or (cp == 0 or cp == 0xfffd or _is_control(ch)):
+                if ch != '\n':
+                    unk_marker[idx][i] = ch
+
+                unk_counter += 1
+            else:
+                text_list.append(ch)
 
             pointer_ed = i + 1
 
-        if pointer_st != pointer_ed:
-            valid_text_list = text_list[pointer_st: pointer_ed]
+        if len(text_list) != 0:
+            valid_text_list = text_list
             if len(valid_text_list) != 0:
                 clean_text_arr.append((
                     ' '.join(valid_text_list),
@@ -408,17 +416,23 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None, unkown_tok
                     idx, 1, (pointer_st, pointer_ed)
                 ))
 
-    return clean_text_arr, line_marker
+    # print('clean_text', clean_text_arr)
+    # print('line_marker', line_marker)
+    # print('unk_marker', unk_marker)
+
+    for k, v in clean_text_arr:
+        print(len(k), len(v))
+
+    return clean_text_arr, line_marker, unk_marker
 
 
 # 先主要针对中文序列标注（单字），转换空格。一篇文本，不含换行符号
 @timer
 def text_array_for_predict(input_text_arr, learner):
     # 记录空行的索引，以供插入
-    clean_text_arr, line_marker = split_text(
+    clean_text_arr, line_marker, unk_marker = split_text(
         input_text_arr=input_text_arr,
         max_seq_len=learner.data.max_seq_len - 20,  # 减num是因为可能会扩展
-        unkown_token_size=learner.data.unknown_token_size
     )
 
     df = pd.DataFrame(clean_text_arr, columns=['1', '0'])
@@ -446,17 +460,18 @@ def text_array_for_predict(input_text_arr, learner):
     tokens, labels = bert_labels2tokens(dl, preds, fn=first_choicer)
     span_preds = tokens2spans(tokens, labels)
 
-    return restore_text_for_pos(input_text_arr, line_marker, span_preds)
+    return restore_text_for_pos(input_text_arr, line_marker, unk_marker, span_preds)
 
 
 # 恢复成原有的句子形式
-def restore_text_for_pos(input_text_arr, line_marker, span_preds):
+def restore_text_for_pos(input_text_arr, line_marker, unk_marker, span_preds):
     results = []
     pred_counter = 0
 
     cache = []
     input_text = ''
     last_index = -1
+
     for idx, (arr_index, marker, (pointer_st, pointer_ed)) in enumerate(line_marker):
         if arr_index != last_index:
             input_text = input_text_arr[arr_index]
@@ -469,6 +484,13 @@ def restore_text_for_pos(input_text_arr, line_marker, span_preds):
             # 下边为恢复机制
             pred = span_preds[pred_counter]
             st = 0
+            while st + pointer_st in unk_marker[arr_index]:
+                cache.append((
+                    unk_marker[arr_index][st],
+                    'w'
+                ))
+                st += 1
+
             text = input_text[pointer_st:pointer_ed]
             text_size = len(text)
 
@@ -482,6 +504,7 @@ def restore_text_for_pos(input_text_arr, line_marker, span_preds):
                     if token[tok_st] == ' ':
                         tok_st += 1
                         continue
+
                     if text[st] != token[tok_st]:
                         # 标记为unk
                         tok_ed1 = tok_st + len(UNKNOWN_CHAR)
@@ -508,6 +531,9 @@ def restore_text_for_pos(input_text_arr, line_marker, span_preds):
                     else:
                         st += 1
                         tok_st += 1
+
+                    while st + pointer_st in unk_marker[arr_index]:
+                        st += 1
 
                 if tok_st < tok_size:
                     raise Exception('识别边界出错')

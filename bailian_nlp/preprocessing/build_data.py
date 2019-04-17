@@ -169,8 +169,8 @@ def build_pos_train_and_valid_data():
                     from bailian_nlp.modules.data.tokenization import _is_control
                     from bailian_nlp.modules.settings import UNKNOWN_CHAR
                     char_list = [
-                        UNKNOWN_CHAR if c in replace_chars or c.isspace() or _is_control(c) else c for c in
-                        list(word)
+                        c for c in list(word)
+                        if not (c in replace_chars or c.isspace() or _is_control(c))
                     ]
 
                     char_size = len(char_list)
