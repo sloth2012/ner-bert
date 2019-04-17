@@ -445,10 +445,15 @@ def text_array_for_predict(input_text_arr, learner):
     tokens, labels = bert_labels2tokens(dl, preds, fn=first_choicer)
     span_preds = tokens2spans(tokens, labels)
 
+    return restore_text_for_pos(input_text_arr, line_marker, span_preds)
+
+
+# 恢复成原有的句子形式
+def restore_text_for_pos(input_text_arr, line_marker, span_preds):
     results = []
     pred_counter = 0
 
-    result = []
+    cache = []
     input_text = ''
     last_index = -1
     for idx, (arr_index, marker, (pointer_st, pointer_ed)) in enumerate(line_marker):
@@ -456,8 +461,8 @@ def text_array_for_predict(input_text_arr, learner):
             input_text = input_text_arr[arr_index]
 
             if last_index != -1:
-                results.append(result)
-                result = []
+                results.append(cache)
+                cache = []
 
         if pointer_ed != pointer_st:
             # 下边为恢复机制
@@ -506,17 +511,17 @@ def text_array_for_predict(input_text_arr, learner):
                 if tok_st < tok_size:
                     raise Exception('识别边界出错')
 
-                result.append((text[valid_st: st], lab))
+                cache.append((text[valid_st: st], lab))
 
             pred_counter += 1
 
         if marker == 0:
-            result.append(('\n', 'w'))
+            cache.append(('\n', 'w'))
 
         last_index = arr_index
 
-    if len(result) != 0:
-        results.append(result)
+    if len(cache) != 0:
+        results.append(cache)
 
     return results
 
