@@ -319,7 +319,7 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None, unkown_tok
         ' '
     ]
 
-    punctuation = ',，.。：:！;!'
+    punctuation = ',，.。：:！;!、'
 
     # 记录一些索引，用于还原。三元组，第一个元素：文本在输入list中的索引；第二个元素：0表示为换行，1表示直接追加；第三个元素：表示起始位置；
     # 这里三元组用于将各个输入的字符串数组进行分解组织，以供后续还原
@@ -416,7 +416,7 @@ def text_array_for_predict(input_text_arr, learner):
     # 记录空行的索引，以供插入
     clean_text_arr, line_marker = split_text(
         input_text_arr=input_text_arr,
-        max_seq_len=learner.data.max_seq_len - 5,  # 减num是因为可能会扩展
+        max_seq_len=learner.data.max_seq_len - 20,  # 减num是因为可能会扩展
         unkown_token_size=learner.data.unknown_token_size
     )
 
