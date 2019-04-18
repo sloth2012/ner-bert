@@ -24,7 +24,7 @@ import tensorflow as tf
 import torch
 import numpy as np
 
-from bailian_nlp.modules.layers import BertConfig, BertModel
+from bailian_nlp.modules.layers.bert_modeling import BertConfig, BertModel
 
 parser = argparse.ArgumentParser()
 

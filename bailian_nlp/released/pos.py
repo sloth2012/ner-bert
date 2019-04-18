@@ -114,8 +114,12 @@ class PosTagger:
         pos_words = []
         if _DICTIONARY.sizes != 0:
             for sent, words in zip(text, all_words):
-                words = self._merge_user_words(sent, words)
-                pos_words.append(words)
+                try:
+                    words = self._merge_user_words(sent, words)
+                    pos_words.append(words)
+                except:
+                    print('error text:', sent)
+                    raise
         else:
             pos_words = all_words
         return pos_words
@@ -162,6 +166,9 @@ class PosTagger:
         route[text_len] = (0, 0, dictionary._UNKNOWN_LABEL)
 
         for idx in range(text_len - 1, -1, -1):
+            # print(graph)
+            # print(idx, route)
+
             m = [((graph.get(idx).get(k)[0] + route[k][0]), k, graph.get(idx).get(k)[1]) for k in graph.get(idx).keys()]
 
             # print('**************')

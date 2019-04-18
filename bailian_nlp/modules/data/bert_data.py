@@ -336,8 +336,9 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
 
         text_list = []
 
-        # 每个区间的未知字符数
-        unk_counter = 0
+        # 第一个元素表示找到切分标点前的unk数目，第二表示之后的
+        unk_counter = [0, 0]
+
         for i, ch in enumerate(input_text):
             if len(text_list) > max_seq_len:
                 if last_valid_punc_pos == -1:
@@ -354,9 +355,9 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
 
                     pointer_st = pointer_ed
                     text_list = []
-                    unk_counter = 0
+                    unk_counter = [0, 0]
                 else:
-                    ed = last_valid_punc_pos + 1
+                    ed = last_valid_punc_pos
                     valid_text_list = text_list[:ed]
 
                     clean_text_arr.append((
@@ -366,14 +367,14 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
 
                     text_list = text_list[ed:]
 
-                    ed += unk_counter + pointer_st
+                    ed += unk_counter[0] + pointer_st
 
                     # print(ed, unk_counter, pointer_st)
                     line_marker.append((
                         idx, 1, (pointer_st, ed)
                     ))
                     pointer_st = ed
-                    unk_counter = 0
+                    unk_counter = [unk_counter[1], 0]
 
                 last_valid_punc_pos = -1
 
@@ -393,10 +394,8 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
 
                     last_valid_punc_pos = -1
                     text_list = []
-                    unk_counter = 0
 
-            if ch in punctuation:
-                last_valid_punc_pos = len(text_list)
+                    unk_counter = [0, 0]
 
             from .tokenization import _is_control
             cp = ord(ch)
@@ -406,9 +405,15 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
                 if ch != '\n':
                     unk_marker[idx][i] = ch
 
-                unk_counter += 1
+                unk_counter[1] += 1
+
             else:
                 text_list.append(ch)
+
+            if ch in punctuation:
+                last_valid_punc_pos = len(text_list)
+                unk_counter[0] += unk_counter[1]
+                unk_counter[1] = 0
 
             pointer_ed = i + 1
 
@@ -427,7 +432,7 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
     # print('clean_text', clean_text_arr)
     # print('line_marker', line_marker)
     # print('unk_marker', unk_marker)
-
+    #
     # for k, v in clean_text_arr:
     #     print(len(k), len(v))
 
@@ -498,12 +503,15 @@ def restore_text_for_pos(input_text_arr, line_marker, unk_marker, span_preds):
             # 下边为恢复机制
             pred = span_preds[pred_counter]
             st = 0
-            while st + pointer_st in unk_marker[arr_index]:
+
+            start_pos = st + pointer_st
+            while start_pos in unk_marker[arr_index]:
                 cache.append((
-                    unk_marker[arr_index][st],
+                    unk_marker[arr_index][start_pos],
                     'w'
                 ))
                 st += 1
+                start_pos = st + pointer_st
 
             text = input_text[pointer_st:pointer_ed]
             text_size = len(text)

@@ -65,6 +65,7 @@ def tokens2spans_(tokens_, labels_):
     res = []
     idx_ = 0
 
+    # print('model cut result:')
     # for i, (t, l) in enumerate(zip(tokens_, labels_)):
     #     print(i, t, l)
 
