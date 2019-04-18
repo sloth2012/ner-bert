@@ -120,6 +120,16 @@ class PosTagger:
             pos_words = all_words
         return pos_words
 
+    def lexer2str(self, pos_sents):
+        results = []
+        for pos_sent in pos_sents:
+            result = []
+            for word, flag in pos_sent:
+                result.append(f'{word}/{flag}')
+            results.append(' '.join(result))
+
+        return results
+
     @staticmethod
     def _merge_user_words(text, seg_results):
         if not _DICTIONARY:
