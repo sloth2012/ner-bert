@@ -400,7 +400,9 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
 
             from .tokenization import _is_control
             cp = ord(ch)
-            if ch in replace_chars or ch.isspace() or (cp == 0 or cp == 0xfffd or _is_control(ch)):
+            if ch in replace_chars \
+                    or ch.isspace() \
+                    or (cp == 0 or cp == 0xfffd or _is_control(ch)):
                 if ch != '\n':
                     unk_marker[idx][i] = ch
 
@@ -457,6 +459,12 @@ def text_array_for_predict(input_text_arr, learner):
     dl = DataLoaderForPredict(
         f, batch_size=learner.data.batch_size, shuffle=False,
         cuda=cuda)
+
+    # for dataset in dl.dataset:
+    #     print('------------分隔符-----------')
+    #
+    #     for token, label in zip(dataset.bert_tokens, dataset.labels):
+    #         print(token, label)
 
     # 此处耗时较多
     preds = learner.predict(dl)
