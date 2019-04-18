@@ -336,6 +336,7 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
 
         text_list = []
 
+        # 每个区间的未知字符数
         unk_counter = 0
         for i, ch in enumerate(input_text):
             if len(text_list) > max_seq_len:
@@ -353,6 +354,7 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
 
                     pointer_st = pointer_ed
                     text_list = []
+                    unk_counter = 0
                 else:
                     ed = last_valid_punc_pos + 1
                     valid_text_list = text_list[:ed]
@@ -365,10 +367,13 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
                     text_list = text_list[ed:]
 
                     ed += unk_counter + pointer_st
+
+                    # print(ed, unk_counter, pointer_st)
                     line_marker.append((
                         idx, 1, (pointer_st, ed)
                     ))
                     pointer_st = ed
+                    unk_counter = 0
 
                 last_valid_punc_pos = -1
 
@@ -388,6 +393,7 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
 
                     last_valid_punc_pos = -1
                     text_list = []
+                    unk_counter = 0
 
             if ch in punctuation:
                 last_valid_punc_pos = len(text_list)
@@ -419,7 +425,7 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
     # print('clean_text', clean_text_arr)
     # print('line_marker', line_marker)
     # print('unk_marker', unk_marker)
-    #
+
     # for k, v in clean_text_arr:
     #     print(len(k), len(v))
 
@@ -432,7 +438,7 @@ def text_array_for_predict(input_text_arr, learner):
     # 记录空行的索引，以供插入
     clean_text_arr, line_marker, unk_marker = split_text(
         input_text_arr=input_text_arr,
-        max_seq_len=learner.data.max_seq_len - 20,  # 减num是因为可能会扩展
+        max_seq_len=learner.data.max_seq_len - 5,  # 减num是因为可能会扩展
     )
 
     df = pd.DataFrame(clean_text_arr, columns=['1', '0'])
@@ -505,6 +511,7 @@ def restore_text_for_pos(input_text_arr, line_marker, unk_marker, span_preds):
                         tok_st += 1
                         continue
 
+                    # print(text, ':', token, ':', text[st], ':', token[tok_st])
                     if text[st] != token[tok_st]:
                         # 标记为unk
                         tok_ed1 = tok_st + len(UNKNOWN_CHAR)
