@@ -364,7 +364,7 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
 
                     text_list = text_list[ed:]
 
-                    ed += unk_counter
+                    ed += unk_counter + pointer_st
                     line_marker.append((
                         idx, 1, (pointer_st, ed)
                     ))
@@ -419,7 +419,7 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
     # print('clean_text', clean_text_arr)
     # print('line_marker', line_marker)
     # print('unk_marker', unk_marker)
-
+    #
     # for k, v in clean_text_arr:
     #     print(len(k), len(v))
 
@@ -510,7 +510,7 @@ def restore_text_for_pos(input_text_arr, line_marker, unk_marker, span_preds):
                         tok_ed1 = tok_st + len(UNKNOWN_CHAR)
                         if tok_ed1 > tok_size:
                             # print('err:', token, lab, token[tok_st:tok_ed1])
-                            raise Exception(f'边界识别错误:{UNKNOWN_CHAR}')
+                            raise Exception(f'边界识别错误:{UNKNOWN_CHAR} in ({text})')
 
                         if token[tok_st:tok_ed1] == UNKNOWN_CHAR:
                             tok_st = tok_ed1
@@ -519,14 +519,14 @@ def restore_text_for_pos(input_text_arr, line_marker, unk_marker, span_preds):
                             # 标记为[UNK]，这个是系统默认的
                             tok_ed2 = tok_st + 5
                             if tok_ed2 > tok_size:
-                                raise Exception('边界识别错误1:[UNK]')
+                                raise Exception(f'边界识别错误1:[UNK] in ({text})')
 
                             # print('err:', token, lab, token[tok_st:tok_ed2])
                             if token[tok_st:tok_ed2] == '[UNK]':
                                 tok_st = tok_ed2
                                 st += 1
                             else:
-                                raise Exception('边界识别错误2:[UNK]')
+                                raise Exception(f'边界识别错误2:[UNK] in ({text})')
 
                     else:
                         st += 1
@@ -536,7 +536,7 @@ def restore_text_for_pos(input_text_arr, line_marker, unk_marker, span_preds):
                         st += 1
 
                 if tok_st < tok_size:
-                    raise Exception('识别边界出错')
+                    raise Exception(f'识别边界出错 in in ({text})')
 
                 cache.append((text[valid_st: st], lab))
 
