@@ -50,6 +50,7 @@ args = parser.parse_args()
 
 
 def convert():
+    global args
     # Initialise PyTorch model
     config = BertConfig.from_json_file(args.bert_config_file)
     model = BertModel(config)
