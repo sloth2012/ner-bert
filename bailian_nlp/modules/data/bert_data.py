@@ -305,7 +305,7 @@ def get_bert_data_loader_for_predict(path, learner):
 
 # TODO 暂时未用到cls和meta，所以先不考虑
 def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
-    replace_chars = [
+    unk_chars = [
         '\x97',
         '\uf076',
         "\ue405",
@@ -319,6 +319,14 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
         ' '
     ]
 
+    # 由于类似中文引号类在vocab.txt无，所以加了个映射来调整下。
+    replace_chars_mapping = {
+        '“': '"',
+        '”': '"',
+        '‘': '\'',
+        '’': '\''
+    }
+
     punctuation = ',，.。：:！;!、'
 
     # 记录一些索引，用于还原。三元组，第一个元素：文本在输入list中的索引；第二个元素：0表示为换行，1表示直接追加；第三个元素：表示起始位置；
@@ -327,7 +335,9 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
     clean_text_arr = []
 
     from collections import defaultdict
+    # 主要是空格类的输出替换
     unk_marker = defaultdict(lambda: defaultdict(str))
+
     for idx, input_text in enumerate(input_text_arr):
         # 设置两个指针，进行符合长度的串的提取
         pointer_st = 0
@@ -340,6 +350,9 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
         unk_counter = [0, 0]
 
         for i, ch in enumerate(input_text):
+            if ch in replace_chars_mapping:
+                ch = replace_chars_mapping[ch]
+
             if len(text_list) > max_seq_len:
                 if last_valid_punc_pos == -1:
                     valid_text_list = text_list
@@ -399,7 +412,7 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
 
             from .tokenization import _is_control
             cp = ord(ch)
-            if ch in replace_chars \
+            if ch in unk_chars \
                     or ch.isspace() \
                     or (cp == 0 or cp == 0xfffd or _is_control(ch)):
                 if ch != '\n':
@@ -436,14 +449,14 @@ def split_text(input_text_arr: str, max_seq_len, cls=None, meta=None):
     # for k, v in clean_text_arr:
     #     print(len(k), len(v))
 
-    return clean_text_arr, line_marker, unk_marker
+    return clean_text_arr, line_marker, unk_marker, replace_chars_mapping
 
 
 # 先主要针对中文序列标注（单字），转换空格。一篇文本，不含换行符号
 @timer
 def text_array_for_predict(input_text_arr, learner):
     # 记录空行的索引，以供插入
-    clean_text_arr, line_marker, unk_marker = split_text(
+    clean_text_arr, line_marker, unk_marker, replace_chars_mapping = split_text(
         input_text_arr=input_text_arr,
         max_seq_len=learner.data.max_seq_len - 5,  # 减num是因为可能会扩展
     )
@@ -479,11 +492,11 @@ def text_array_for_predict(input_text_arr, learner):
     tokens, labels = bert_labels2tokens(dl, preds, fn=first_choicer)
     span_preds = tokens2spans(tokens, labels)
 
-    return restore_text_for_pos(input_text_arr, line_marker, unk_marker, span_preds)
+    return restore_text_for_pos(input_text_arr, line_marker, unk_marker, replace_chars_mapping, span_preds)
 
 
 # 恢复成原有的句子形式
-def restore_text_for_pos(input_text_arr, line_marker, unk_marker, span_preds):
+def restore_text_for_pos(input_text_arr, line_marker, unk_marker, replace_chars_mapping, span_preds):
     results = []
     pred_counter = 0
 
@@ -528,7 +541,7 @@ def restore_text_for_pos(input_text_arr, line_marker, unk_marker, span_preds):
                         continue
 
                     # print(text, ':', token, ':', text[st], ':', token[tok_st])
-                    if text[st] != token[tok_st]:
+                    if text[st] != token[tok_st] and replace_chars_mapping.get(text[st]) != token[tok_st]:
                         # 标记为unk
                         tok_ed1 = tok_st + len(UNKNOWN_CHAR)
                         if tok_ed1 > tok_size:
