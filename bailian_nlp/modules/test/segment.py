@@ -17,6 +17,7 @@ def segment_test(sample=False):
     vocab_file = os.path.join(test_dir, 'vocab.txt')
     truth_file = os.path.join(test_dir, 'truth.txt')
     test_file = os.path.join(test_dir, 'test.txt')
+    score_result_file = os.path.join(test_dir, 'score.txt')
 
     score_file = os.path.join(data_dir, 'scripts/score')
 
@@ -101,6 +102,8 @@ def segment_test(sample=False):
     process = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True, encoding='utf8', errors='ignore')
     stdout, stderr = process.communicate()
     print(stdout)
+    with open(score_result_file, 'w') as f:
+        f.write(stdout)
 
 
 if __name__ == '__main__':
