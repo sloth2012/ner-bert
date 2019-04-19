@@ -179,6 +179,9 @@ def build_pos_train_and_valid_data():
                             flag = 'xx'
                         # 单个
                         tag_list = [f'S_{flag}']
+
+                    elif char_size == 0:
+                        continue
                     else:
                         tag_list = [f'B_{flag}'] + [f'I_{flag}'] * (len(char_list) - 2) + [f'E_{flag}']
 
