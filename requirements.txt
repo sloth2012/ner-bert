@@ -8,3 +8,4 @@ six
 gensim
 git+https://github.com/HIT-SCIR/ELMoForManyLangs
 matplotlib
+pytorch_pretrained_bert

@@ -8,4 +8,4 @@
 delimiter = '△△△'
 
 # 空格或无意义的字符替换
-UNKNOWN_CHAR = 'unk'
+UNKNOWN_CHAR = '[UNK]'
