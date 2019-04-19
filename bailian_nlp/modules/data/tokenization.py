@@ -251,6 +251,45 @@ class BailianTokenizer(object):
 
         return split_tokens, marker
 
+    def recover_text(self, text, tokens, labels, marker, default_label='w'):
+
+        assert len(tokens) == len(labels) and len(marker) >= len(tokens)
+        cache = []
+
+        restore_labels = []
+        pointer = 0
+
+        for idx, (tp, (st, ed)) in enumerate(marker):
+            if tp == 1:
+                # print(st, ed, cache)
+                for cache_st, cache_ed in cache:
+                    if cache_ed == st:
+                        restore_labels.append((
+                            text[cache_st: cache_ed], default_label
+                        ))
+                        restore_labels.append((
+                            text[st:ed], default_label
+                        ))
+                    else:
+                        ed += (cache_ed - cache_st)
+
+                        restore_labels.append((
+                            text[st: ed], labels[pointer]
+                        ))
+                        pointer += 1
+
+                cache = []
+            else:
+                cache.append((st, ed))
+
+        if len(cache) != 0:
+            for cache_st, cache_ed in cache:
+                restore_labels.append((
+                    text[cache_st:cache_ed], default_label
+                ))
+
+        return restore_labels
+
     def _is_chinese_char(self, cp):
         """Checks whether CP is the codepoint of a CJK character."""
         # This defines a "chinese character" as anything in the CJK Unicode block:
