@@ -160,10 +160,10 @@ def get_data(
         bert_labels.extend(labels[:limit_size])
 
         input_ids = tokenizer.convert_tokens_to_ids(bert_tokens)
-        for l in labels:
+        for l in bert_labels:
             if l not in label2idx:
                 label2idx[l] = len(label2idx)
-        labels_ids = [label2idx[l] for l in labels]
+        labels_ids = [label2idx[l] for l in bert_labels]
 
         # The mask has 1 for real tokens and 0 for padding tokens. Only real
         # tokens are attended to.
@@ -191,7 +191,7 @@ def get_data(
         assert len(input_ids) == len(input_mask)
         assert len(input_ids) == len(input_type_ids)
         if len(input_ids) != len(labels_ids):
-            print(len(input_ids), len(labels_ids), bert_tokens, labels)
+            print(len(input_ids), len(labels_ids), bert_tokens, bert_labels)
             raise Exception('len(input_ids) != len(labels_ids):')
         assert len(input_ids) == len(labels_mask)
     return features, label2idx
