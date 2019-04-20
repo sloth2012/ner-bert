@@ -5,7 +5,7 @@
 配置模型相关的一些公共变量
 '''
 
-delimiter = '△△△'
+DELIMITER = '△△△'
 
 # 空格或无意义的字符替换
 UNKNOWN_CHAR = '[UNK]'

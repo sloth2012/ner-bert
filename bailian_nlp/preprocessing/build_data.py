@@ -1,7 +1,9 @@
 # coding: utf8
 import os
+from bailian_nlp.modules.settings import DELIMITER
 
 
+# TODO 整理baidu分词中的url，针对其进行更改
 def build_pos_fake_data():
     '''
     构造一些较为奇葩的样本数据，形如:
@@ -21,6 +23,7 @@ def build_pos_fake_data():
     addr_path = os.path.join(materials_dir, 'location.dic')
     org_path = os.path.join(materials_dir, 'org.txt')
     per_path = os.path.join(materials_dir, 'han_names.utf8')
+    url_path = os.path.join(materials_dir, 'url.txt')
 
     out_path = os.path.join(data_dir, 'fake.txt')
 
@@ -58,6 +61,14 @@ def build_pos_fake_data():
                 continue
 
             materials['nr'].add(line)
+
+    with open(url_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+
+            materials['xu'].add(line)
 
     for k, v in materials.items():
         materials[k] = list(v)
@@ -122,34 +133,25 @@ def build_pos_train_and_valid_data():
 
     train_path = os.path.join(data_dir, 'pos/train.csv')
     valid_path = os.path.join(data_dir, 'pos/valid.csv')
+    test_path = os.path.join(data_dir, 'pos/test.csv')
 
-    delimiter = '△△△'
-
-    # 注意这里的逻辑需要和modules.bert_data中预测预处理的的split_text函数中的一致
-    replace_chars = [
-        '\x97',
-        '\uf076',
-        "\ue405",
-        "\ue105",
-        "\ue415",
-        '\x07',
-        '\x7f',
-        '\u3000',
-        '\xa0',
-        '\u2005'
-        ' '
-    ]
     with open(seg_file) as fin1, \
             open(fake_file) as fin2, \
             open(special_file) as fin3, \
             open(dict_file, 'w') as fin4, \
             open(train_path, 'w') as train_f, \
-            open(valid_path, 'w') as valid_f:
+            open(valid_path, 'w') as valid_f, \
+            open(test_path, 'w') as test_f:
 
-        train_f.write(f'0{delimiter}1\n')
-        valid_f.write(f'0{delimiter}1\n')
+        train_f.write(f'0{DELIMITER}1\n')
+        valid_f.write(f'0{DELIMITER}1\n')
+        test_f.write(f'0{DELIMITER}1\n')
 
         fins = [fin1, fin2, fin3, fin4]
+
+        from bailian_nlp.modules.data.tokenization import BailianTokenizer
+        tokenizer = BailianTokenizer()
+
         for k, fin in enumerate(fins):
             for line in fin:
                 line = line.strip()
@@ -160,46 +162,24 @@ def build_pos_train_and_valid_data():
                 score = random.random()
 
                 if k < 2:
-                    fout = train_f if score > 0.006 else valid_f
+                    if score > 0.01:
+                        fout = train_f
+                    elif score > 0.004:
+                        fout = valid_f
+                    else:
+                        fout = test_f
                 else:
                     fout = train_f
-                words = []
-                flags = []
-                for word, flag in p.findall(line):
-                    from bailian_nlp.modules.data.tokenization import _is_control
-                    char_list = [
-                        c for c in list(word)
-                        if not (c in replace_chars or c.isspace() or _is_control(c))
-                    ]
 
-                    char_size = len(char_list)
-                    if char_size == 1:
-                        # 一些错误的单个字符实体剔除掉
-                        if flag in ['nt', 'ti', 'nr', 'ns', 'nz']:
-                            flag = 'xx'
-                        # 单个
-                        tag_list = [f'S_{flag}']
-
-                    elif char_size == 0:
-                        continue
-                    else:
-                        tag_list = [f'B_{flag}'] + [f'I_{flag}'] * (len(char_list) - 2) + [f'E_{flag}']
-
-                    if char_size != len(tag_list):
-                        print(line)
-                        print(word, flag)
-                        print(char_list, tag_list)
-
-                    words.extend(char_list)
-                    flags.extend(tag_list)
-
-                assert len(words) == len(flags)
-
-                fout.write(delimiter.join([
-                    ' '.join(flags),
-                    ' '.join(words)
-                ]))
-                fout.write('\n')
+                try:
+                    tokens, labels = tokenizer.tokenize_with_pos_text(line)
+                    fout.write(DELIMITER.join(
+                        ' '.join(tokens),
+                        ' '.join(labels)
+                    ))
+                    fout.write('\n')
+                except:
+                    continue
 
 
 def build_pos_single_data_from_hanlp_dict():

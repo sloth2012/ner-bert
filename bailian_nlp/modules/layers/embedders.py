@@ -1,4 +1,4 @@
-from . import bert_modeling
+from pytorch_pretrained_bert import modeling as bert_modeling
 import torch
 from gensim.models import KeyedVectors
 import os
@@ -6,11 +6,8 @@ import codecs
 import logging
 import json
 from torch import nn
-from elmoformanylangs.modules.embedding_layer import EmbeddingLayer
-from elmoformanylangs.frontend import Model
 
 
-# TODO: add from_config to other embedders
 class BertEmbedder(nn.Module):
     # @property
     def get_config(self):
@@ -60,7 +57,7 @@ class BertEmbedder(nn.Module):
             use_cuda=True,
             bert_mode="weighted",
             freeze=True
-            ):
+    ):
 
         bert_config = bert_modeling.BertConfig.from_json_file(bert_config_file)
         model = bert_modeling.BertModel(bert_config)
@@ -254,6 +251,7 @@ class ElmoEmbedder(nn.Module):
                         tokens.insert(0, '\u3000')
                     token, i = tokens
                     char_lexicon[token] = int(i)
+            from elmoformanylangs.modules.embedding_layer import EmbeddingLayer
             char_emb_layer = EmbeddingLayer(
                 config['token_embedder']['char_dim'], char_lexicon, fix_emb=False, embs=None)
             logging.info('char embedding size: ' +
@@ -271,6 +269,8 @@ class ElmoEmbedder(nn.Module):
                         tokens.insert(0, '\u3000')
                     token, i = tokens
                     word_lexicon[token] = int(i)
+
+            from elmoformanylangs.modules.embedding_layer import EmbeddingLayer
             word_emb_layer = EmbeddingLayer(
                 config['token_embedder']['word_dim'], word_lexicon, fix_emb=False, embs=None)
             logging.info('word embedding size: ' +
@@ -279,6 +279,7 @@ class ElmoEmbedder(nn.Module):
             word_emb_layer = None
 
         # instantiate the model
+        from elmoformanylangs.frontend import Model
         model = Model(config, word_emb_layer, char_emb_layer, use_cuda)
 
         model.load_model(model_dir)

@@ -6,6 +6,7 @@ pandas
 numpy
 six
 gensim
-git+https://github.com/HIT-SCIR/ELMoForManyLangs
+#git+https://github.com/HIT-SCIR/ELMoForManyLangs
 matplotlib
 pytorch_pretrained_bert
+demjson

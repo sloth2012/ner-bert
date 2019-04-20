@@ -3,8 +3,8 @@ from sklearn_crfsuite.metrics import flat_classification_report
 import logging
 import torch
 from ..utils.plot_metrics import get_mean_max_metric
-from .optimization import BertAdam
 import json
+from pytorch_pretrained_bert.optimization import BertAdam
 
 logging.basicConfig(level=logging.INFO)
 
@@ -212,8 +212,8 @@ class NerLearner(object):
             with open(config, "r") as file:
                 config = json.load(file)
 
-        from ..data import bert_data
-        data = bert_data.BertNerData.from_config(config["data"], for_train)
+        from ..data import data_loader
+        data = data_loader.BertData.from_config(config["data"], for_train)
         model_config = config["model"]
 
         from ..utils import utils

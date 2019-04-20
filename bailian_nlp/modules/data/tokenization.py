@@ -3,6 +3,7 @@ from pytorch_pretrained_bert import tokenization
 import unicodedata
 import six
 from ..settings import UNKNOWN_CHAR
+import re
 
 
 def convert_to_unicode(text):
@@ -44,16 +45,20 @@ def convert_ids_to_tokens(inv_vocab, ids):
 class BailianTokenizer(object):
     def __init__(
             self,
-            vocab_file,
+            vocab_file=None,
             unk_token=UNKNOWN_CHAR,
             do_lower_case=True,
             max_input_chars_per_word=200
     ):
+        if vocab_file is None:
+            from ...released.settings import CHINESE_BERT_VOCAB_FILE
+            vocab_file = CHINESE_BERT_VOCAB_FILE
         self.vocab = tokenization.load_vocab(vocab_file)
         self.inv_vocab = {v: k for k, v in self.vocab.items()}
         self.do_lower_case = do_lower_case
         self.unk_token = unk_token
         self.max_input_chars_per_word = max_input_chars_per_word
+        self.pos_pattern = re.compile(r'(.+?)/(?:([a-z]{1,2})(?:$| ))')
 
     def convert_tokens_to_ids(self, tokens):
         return convert_by_vocab(self.vocab, tokens)
@@ -194,7 +199,17 @@ class BailianTokenizer(object):
         token = ''
 
         last_idx = 0
+
+        # 针对不能处理中文引号的问题，这里替换成英文符号
+        replace_chars_mapping = {
+            '“': '"',
+            '”': '"',
+            '‘': '\'',
+            '’': '\''
+        }
+
         for idx, char in enumerate(text):
+            char = replace_chars_mapping.get(char, char)
             cp = ord(char)
             if cp == 0 or cp == 0xfffd or tokenization._is_control(char):
                 # 一些特殊字符去除，这种表示可能出现在marker中的某个区间内
@@ -251,6 +266,7 @@ class BailianTokenizer(object):
 
         return split_tokens, marker
 
+    # 用于恢复文本
     def recover_text(self, text, tokens, labels, marker, default_label='w'):
 
         assert len(tokens) == len(labels) and len(marker) >= len(tokens)
@@ -263,20 +279,22 @@ class BailianTokenizer(object):
             if tp == 1:
                 # print(st, ed, cache)
                 for cache_st, cache_ed in cache:
-                    if cache_ed == st:
+                    if cache_ed < st:
                         restore_labels.append((
                             text[cache_st: cache_ed], default_label
                         ))
+                    elif cache_ed == st:
                         restore_labels.append((
-                            text[st:ed], default_label
+                            text[cache_st: cache_ed], default_label
                         ))
+
                     else:
                         ed += (cache_ed - cache_st)
 
-                        restore_labels.append((
-                            text[st: ed], labels[pointer]
-                        ))
-                        pointer += 1
+                restore_labels.append((
+                    text[st:ed], labels[pointer]
+                ))
+                pointer += 1
 
                 cache = []
             else:
@@ -289,6 +307,82 @@ class BailianTokenizer(object):
                 ))
 
         return restore_labels
+
+    # 用于从词性文本构造符合格式的训练数据，用于训练阶段的数据处理
+    def tokenize_with_pos_text(self, pos_sent):
+        sent = ''
+        pos_marker = []
+        pointer = 0
+        for word, flag in self.pos_pattern.findall(pos_sent):
+            pointer += 1
+            sent += word
+            pos_marker.extend([(flag, pointer)] * len(word))
+
+        tokens, marker = self.tokenize(sent)
+        cache = []
+        cache_labels = []
+
+        # print(marker)
+        for tp, (st, ed) in marker:
+            if tp == 1:
+                for cache_st, cache_ed in cache:
+                    if cache_ed < st:
+                        continue
+
+                    elif cache_ed > st:
+                        ed += (cache_ed - cache_st)
+
+                cache_labels.append(pos_marker[st:ed])
+            else:
+                cache.append((st, ed))
+
+        labels = []
+        cache = []
+        last_cache_label = []
+
+        # print('before:', len(tokens), len(cache_labels))
+
+        for token, cache_label in zip(tokens, cache_labels):
+            last_label = ''
+            for idx, (label, pos) in enumerate(cache_label):
+                if last_label == '':
+                    last_label = label
+
+                if last_label != label:
+                    raise Exception('原有分词与现有tokenizer有冲突')
+
+            if last_cache_label is None or last_cache_label == cache_label:
+                cache.append(last_cache_label)
+            else:
+                size = len(cache)
+                if size == 1:
+                    label = last_label[0]
+                    if label in ['nt', 'ti', 'nr', 'ns', 'nz']:
+                        label = 'xx'
+                    labels.append(f'S_{label}')
+                elif size > 1:
+                    labels.extend(
+                        [f'B_{last_label[0]}']
+                        + [f'I_{last_label[0]}'] * (size - 2)
+                        + [f'E_{last_label[0]}']
+                    )
+
+                cache = [cache_label]
+
+            last_cache_label = cache_label
+
+        size = len(cache)
+        if size == 1:
+            labels.append(f'S_{last_label[0]}')
+        elif size > 1:
+            labels.extend(
+                [f'B_{last_label[0]}']
+                + [f'I_{last_label[0]}'] * (size - 2)
+                + [f'E_{flag}']
+            )
+
+        assert len(tokens) == len(labels)
+        return tokens, labels
 
     def _is_chinese_char(self, cp):
         """Checks whether CP is the codepoint of a CJK character."""
@@ -311,3 +405,44 @@ class BailianTokenizer(object):
             return True
 
         return False
+
+    # 预测专用，输出假label
+    def tokenize_for_predict(self, text, max_seq_len):
+        tokens, marker = self.tokenize(text)
+
+        last_punctuation_idx = -1
+
+        results = []
+        cache = []
+        for idx, token in enumerate(tokens):
+            cache.append(token)
+            if len(token) == 1 and tokenization._is_punctuation(token):
+                last_punctuation_idx = len(cache)
+
+            cache.append(token)
+            # 训练的max_seq_len需要比这个加1
+            if len(cache) > max_seq_len - 1:
+                if last_punctuation_idx != -1:
+                    target = cache[:last_punctuation_idx]
+                    cache = cache[last_punctuation_idx:]
+                    last_punctuation_idx = -1
+                else:
+                    target = cache
+                    cache = []
+                    last_punctuation_idx = -1
+
+                results.append([
+                    ' '.join(target),
+                    ' '.join(['O'] * len(target))
+                ]
+                )
+
+        if len(cache) != 0:
+            target = cache
+            results.append([
+                ' '.join(target),
+                ' '.join(['O'] * len(target))
+            ]
+            )
+
+        return results, marker
