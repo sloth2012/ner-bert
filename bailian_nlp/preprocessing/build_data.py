@@ -24,6 +24,7 @@ def build_pos_fake_data():
     org_path = os.path.join(materials_dir, 'org.txt')
     per_path = os.path.join(materials_dir, 'han_names.utf8')
     url_path = os.path.join(materials_dir, 'url.txt')
+    single_path = os.path.join(materials_dir, 'single.txt')
 
     out_path = os.path.join(data_dir, 'fake.txt')
 
@@ -69,6 +70,18 @@ def build_pos_fake_data():
                 continue
 
             materials['xu'].add(line)
+
+    with open(single_path) as f:
+        import re
+
+        p = re.compile(r'(.+?)/(?:([a-z]{1,2})(?:$| ))')
+
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            for word, label in p.findall(line):
+                materials[label].add(word)
 
     for k, v in materials.items():
         materials[k] = list(v)
@@ -119,9 +132,6 @@ def build_pos_train_and_valid_data():
     构造词性标注模型的训练和验证数据，根据百度分词结果（自定义词库）和上面的fake数据来组织进行。
     :return:
     '''
-    import re
-
-    p = re.compile(r'(.+?)/(?:([a-z]{1,2})(?:$| ))')
 
     root_dir, _ = os.path.split(os.path.realpath(__file__))
     data_dir = os.path.join(os.path.dirname(root_dir), 'datadrive/bailian')
@@ -290,7 +300,7 @@ def build_pos_single_data_from_hanlp_dict():
                     if not word or not flag:
                         continue
 
-                    from bailian_nlp.modules.data.tokenization import _is_control
+                    from pytorch_pretrained_bert.tokenization import _is_control
                     if len(word) == 1 and _is_control(word):
                         break
                     fout.write(f'{word}/{flag}\n')

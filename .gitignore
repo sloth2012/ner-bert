@@ -118,3 +118,4 @@ venv.bak/
 .DS_Store
 
 bailian_nlp/datadrive
+nohup.out
