@@ -4,7 +4,7 @@ import logging
 import torch
 from ..utils.plot_metrics import get_mean_max_metric
 import json
-from pytorch_pretrained_bert.optimization import BertAdam
+from .optimization import BertAdam
 
 logging.basicConfig(level=logging.INFO)
 
