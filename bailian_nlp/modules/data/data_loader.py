@@ -82,10 +82,7 @@ class DataLoaderForTrain(DataLoader):
             res.append(example)
         res_ = []
         for idx, x in enumerate(zip(*res)):
-            if data[0].meta is not None and idx == 3:
-                res_.append(torch.FloatTensor(x))
-            else:
-                res_.append(torch.LongTensor(x))
+            res_.append(torch.LongTensor(x))
         if self.cuda:
             res_ = [t.cuda() for t in res_]
         return res_
@@ -118,10 +115,7 @@ class DataLoaderForPredict(DataLoader):
             res.append(example)
         res_ = []
         for idx, x in enumerate(zip(*res)):
-            if data[0].meta is not None and idx == 3:
-                res_.append(torch.FloatTensor(x))
-            else:
-                res_.append(torch.LongTensor(x))
+            res_.append(torch.LongTensor(x))
         sorted_idx = torch.LongTensor(list(sorted_idx))
         if self.cuda:
             res_ = [t.cuda() for t in res_]
@@ -244,10 +238,12 @@ def get_bert_data_loaders(
 
 def get_bert_data_loader_for_predict(path, learner):
     df = pd.read_csv(path, delimiter=DELIMITER)
-    f, _ = get_data(df, tokenizer=learner.data.tokenizer,
-                    label2idx=learner.data.label2idx, cls2idx=learner.data.cls2idx,
-                    is_cls=learner.data.is_cls,
-                    max_seq_len=learner.data.max_seq_len, is_meta=learner.data.is_meta)
+    f, _ = get_data(
+        df,
+                    tokenizer=learner.data.tokenizer,
+                    label2idx=learner.data.label2idx,
+                    max_seq_len=learner.data.max_seq_len,
+    )
     dl = DataLoaderForPredict(
         f, batch_size=learner.data.batch_size, shuffle=False,
         cuda=True)
@@ -349,7 +345,6 @@ class BertData(object):
         self.batch_size = batch_size
         self.cuda = cuda and torch.cuda.is_available()
         self.id2label = sorted(label2idx.keys(), key=lambda x: label2idx[x])
-        self.is_cls = False
         self.max_seq_len = max_seq_len
 
     def reload_dl(self, path, for_train=True):
