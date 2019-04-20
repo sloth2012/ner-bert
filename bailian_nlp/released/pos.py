@@ -40,7 +40,6 @@ class PosTagger:
             text = self._check_input(text, ignore)
 
         from ..modules.data.data_loader import text_array_for_predict
-        self.learner.data.tokenizer.tokenize(text)
         res = text_array_for_predict(text, learner=self.learner)
 
         return res
