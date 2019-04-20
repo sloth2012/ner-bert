@@ -190,6 +190,8 @@ def build_pos_train_and_valid_data():
                         ' '.join(labels)
                     ]))
                     fout.write('\n')
+                except KeyboardInterrupt:
+                    raise
                 except:
                     error_counter += 1
                     print(error_counter, total_counter, error_counter/total_counter)
