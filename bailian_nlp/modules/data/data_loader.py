@@ -20,11 +20,9 @@ class InputFeatures(object):
             input_type_ids,
 
             # Origin data
-            tokens,
             labels,
             labels_ids,
             labels_mask,
-            tok_map
     ):
         """
         Data has the following structure.
@@ -46,7 +44,6 @@ class InputFeatures(object):
         self.data.append(input_type_ids)
 
         # Origin data
-        self.tokens = tokens
         self.labels = labels
 
         # Labels data
@@ -54,7 +51,6 @@ class InputFeatures(object):
         self.data.append(labels_mask)
         self.labels_ids = labels_ids
         self.data.append(labels_ids)
-        self.tok_map = tok_map
 
 
 class DataLoaderForTrain(DataLoader):
@@ -214,7 +210,7 @@ def get_bert_data_loaders(
     train = pd.read_csv(train, delimiter=DELIMITER)
     valid = pd.read_csv(valid, delimiter=DELIMITER)
 
-    tokenizer = tokenization.FullTokenizer(
+    tokenizer = tokenization.BailianTokenizer(
         vocab_file=vocab_file,
         do_lower_case=do_lower_case
     )
@@ -306,7 +302,7 @@ def text_array_for_predict(input_text_arr: list, learner):
             pred_labels
         )
 
-        results.append(results)
+        results.append(result)
 
     return results
 
@@ -340,7 +336,7 @@ class BertData(object):
             max_seq_len=424,
             batch_size=16,
             cuda=True,
-        ):
+    ):
 
         self.train_path = train_path
         self.valid_path = valid_path
@@ -358,7 +354,7 @@ class BertData(object):
 
     def reload_dl(self, path, for_train=True):
         '''
-            重新加载数据集
+        重新加载数据集
         :param path:
         :param for_train: 是否为了训练
         :return:
@@ -369,10 +365,7 @@ class BertData(object):
             df,
             tokenizer=self.tokenizer,
             label2idx=self.label2idx,
-            cls2idx=self.cls2idx,
-            is_cls=self.is_cls,
             max_seq_len=self.max_seq_len,
-            is_meta=self.is_meta
         )
 
         f = DataLoaderForPredict if not for_train else DataLoaderForTrain
@@ -413,7 +406,7 @@ class BertData(object):
             fn_res = (
                 None,
                 None,
-                tokenization.FullTokenizer(
+                tokenization.BailianTokenizer(
                     vocab_file=config["vocab_file"],
                     do_lower_case=do_lower_case
                 ),
