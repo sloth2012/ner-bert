@@ -24,7 +24,7 @@ def build_pos_fake_data():
     org_path = os.path.join(materials_dir, 'org.txt')
     per_path = os.path.join(materials_dir, 'han_names.utf8')
     url_path = os.path.join(materials_dir, 'url.txt')
-    single_path = os.path.join(materials_dir, 'single.txt')
+    single_path = os.path.join(data_dir, 'single.txt')
 
     out_path = os.path.join(data_dir, 'fake.txt')
 
