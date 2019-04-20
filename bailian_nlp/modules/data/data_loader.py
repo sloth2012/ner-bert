@@ -240,9 +240,9 @@ def get_bert_data_loader_for_predict(path, learner):
     df = pd.read_csv(path, delimiter=DELIMITER)
     f, _ = get_data(
         df,
-                    tokenizer=learner.data.tokenizer,
-                    label2idx=learner.data.label2idx,
-                    max_seq_len=learner.data.max_seq_len,
+        tokenizer=learner.data.tokenizer,
+        label2idx=learner.data.label2idx,
+        max_seq_len=learner.data.max_seq_len,
     )
     dl = DataLoaderForPredict(
         f, batch_size=learner.data.batch_size, shuffle=False,
