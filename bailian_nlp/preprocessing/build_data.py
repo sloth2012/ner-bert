@@ -162,12 +162,14 @@ def build_pos_train_and_valid_data():
         from bailian_nlp.modules.data.tokenization import BailianTokenizer
         tokenizer = BailianTokenizer()
 
+        total_counter = 0
+        error_counter = 0
         for k, fin in enumerate(fins):
             for line in fin:
                 line = line.strip()
                 if not line:
                     continue
-
+                total_counter += 1
                 import random
                 score = random.random()
 
@@ -183,12 +185,14 @@ def build_pos_train_and_valid_data():
 
                 try:
                     tokens, labels = tokenizer.tokenize_with_pos_text(line)
-                    fout.write(DELIMITER.join(
+                    fout.write(DELIMITER.join([
                         ' '.join(tokens),
                         ' '.join(labels)
-                    ))
+                    ]))
                     fout.write('\n')
                 except:
+                    error_counter += 1
+                    print(error_counter, total_counter, error_counter/total_counter)
                     continue
 
 
@@ -309,4 +313,6 @@ def build_pos_single_data_from_hanlp_dict():
 if __name__ == '__main__':
     # build_pos_fake_data()
 
-    build_pos_single_data_from_hanlp_dict()
+    # build_pos_single_data_from_hanlp_dict()
+
+    build_pos_train_and_valid_data()
