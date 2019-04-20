@@ -1,4 +1,3 @@
-from pytorch_pretrained_bert import modeling as bert_modeling
 import torch
 from gensim.models import KeyedVectors
 import os
@@ -14,8 +13,6 @@ class BertEmbedder(nn.Module):
         config = {
             "name": "BertEmbedder",
             "params": {
-                "bert_config_file": self.bert_config_file,
-                "init_checkpoint_pt": self.init_checkpoint_pt,
                 "freeze": self.is_freeze,
                 "embedding_dim": self.embedding_dim,
                 "use_cuda": self.use_cuda,
@@ -45,30 +42,7 @@ class BertEmbedder(nn.Module):
 
     @classmethod
     def from_config(cls, config):
-        return cls.recover(**config)
-
-    # 恢复模型时，pretrain的会自动恢复，不用在初始化加载
-    @classmethod
-    def recover(
-            cls,
-            bert_config_file,
-            init_checkpoint_pt,
-            embedding_dim=768,
-            use_cuda=True,
-            bert_mode="weighted",
-            freeze=True
-    ):
-
-        bert_config = bert_modeling.BertConfig.from_json_file(bert_config_file)
-        model = bert_modeling.BertModel(bert_config)
-
-        model = cls(model=model, embedding_dim=embedding_dim, use_cuda=use_cuda, bert_mode=bert_mode,
-                    bert_config_file=bert_config_file, init_checkpoint_pt=init_checkpoint_pt, freeze=freeze)
-
-        if freeze:
-            model.freeze()
-
-        return model
+        return cls.create(**config)
 
     def init_weights(self):
         if self.bert_mode == "weighted":
@@ -116,27 +90,30 @@ class BertEmbedder(nn.Module):
         return pp
 
     @classmethod
-    def create(cls,
-               bert_config_file,
-               init_checkpoint_pt,
-               embedding_dim=768,
-               use_cuda=True,
-               bert_mode="weighted",
-               freeze=True
-               ):
-        bert_config = bert_modeling.BertConfig.from_json_file(bert_config_file)
-        model = bert_modeling.BertModel(bert_config)
+    def create(
+            cls,
+            embedding_dim=768,
+            use_cuda=True,
+            bert_mode="weighted",
+            freeze=True
+    ):
+
+        from pytorch_pretrained_bert import BertModel
+
+        model = BertModel.from_pretrained('bert-base-chinese')
         if use_cuda and torch.cuda.is_available():
             device = torch.device("cuda")
-            map_location = "cuda"
         else:
-            map_location = "cpu"
             device = torch.device("cpu")
 
-        model.load_state_dict(torch.load(init_checkpoint_pt, map_location=map_location))
         model = model.to(device)
-        model = cls(model=model, embedding_dim=embedding_dim, use_cuda=use_cuda, bert_mode=bert_mode,
-                    bert_config_file=bert_config_file, init_checkpoint_pt=init_checkpoint_pt, freeze=freeze)
+        model = cls(
+            model=model,
+            embedding_dim=embedding_dim,
+            use_cuda=use_cuda,
+            bert_mode=bert_mode,
+            freeze=freeze
+        )
         if freeze:
             model.freeze()
         return model
