@@ -84,21 +84,28 @@ class BertBiLSTMCRF(NerModel):
         return self.decoder.score(output, batch[-2], batch[-1])
 
     @classmethod
-    def create(cls,
-               label_size,
-               # BertEmbedder params
-               bert_config_file, init_checkpoint_pt, embedding_dim=768, bert_mode="weighted",
-               freeze=True,
-               # BertBiLSTMEncoder params
-               enc_hidden_dim=128, rnn_layers=1,
-               # CRFDecoder params
-               input_dropout=0.5,
-               # Global params
-               use_cuda=True,
-               # Meta
-               meta_dim=None):
+    def create(
+            cls,
+            label_size,
+            embedding_dim=768,
+            bert_mode="weighted",
+            freeze=True,
+            # BertBiLSTMEncoder params
+            enc_hidden_dim=128,
+            rnn_layers=1,
+            # CRFDecoder params
+            input_dropout=0.5,
+            # Global params
+            use_cuda=True,
+            # Meta
+            meta_dim=None
+    ):
         embedder = BertEmbedder.create(
-            bert_config_file, init_checkpoint_pt, embedding_dim, use_cuda, bert_mode, freeze)
+            embedding_dim,
+            use_cuda,
+            bert_mode,
+            freeze
+        )
         if meta_dim is None:
             encoder = BertBiLSTMEncoder.create(embedder, enc_hidden_dim, rnn_layers, use_cuda)
         else:
@@ -117,22 +124,31 @@ class BertBiLSTMAttnCRF(NerModel):
         return self.decoder.score(output, batch[-2], batch[-1])
 
     @classmethod
-    def create(cls,
-               label_size,
-               # BertEmbedder params
-               bert_config_file, init_checkpoint_pt, embedding_dim=768, bert_mode="weighted",
-               freeze=True,
-               # BertBiLSTMEncoder params
-               enc_hidden_dim=128, rnn_layers=1,
-               # AttnCRFDecoder params
-               key_dim=64, val_dim=64, num_heads=3,
-               input_dropout=0.5,
-               # Global params
-               use_cuda=True,
-               # Meta
-               meta_dim=None):
+    def create(
+            cls,
+            label_size,
+            embedding_dim=768,
+            bert_mode="weighted",
+            freeze=True,
+            # BertBiLSTMEncoder params
+            enc_hidden_dim=128,
+            rnn_layers=1,
+            # AttnCRFDecoder params
+            key_dim=64,
+            val_dim=64,
+            num_heads=3,
+            input_dropout=0.5,
+            # Global params
+            use_cuda=True,
+            # Meta
+            meta_dim=None
+    ):
         embedder = BertEmbedder.create(
-            bert_config_file, init_checkpoint_pt, embedding_dim, use_cuda, bert_mode, freeze)
+            embedding_dim,
+            use_cuda,
+            bert_mode,
+            freeze
+        )
         if meta_dim is None:
             encoder = BertBiLSTMEncoder.create(embedder, enc_hidden_dim, rnn_layers, use_cuda)
         else:
@@ -153,18 +169,26 @@ class BertAttnCRF(NerModel):
         return self.decoder.score(output, batch[-2], batch[-1])
 
     @classmethod
-    def create(cls,
-               label_size,
-               # BertEmbedder params
-               bert_config_file, init_checkpoint_pt, embedding_dim=768, bert_mode="weighted",
-               freeze=True,
-               # AttnCRFDecoder params
-               key_dim=64, val_dim=64, num_heads=3,
-               input_dropout=0.5,
-               # Global params
-               use_cuda=True):
+    def create(
+            cls,
+            label_size,
+            embedding_dim=768,
+            bert_mode="weighted",
+            freeze=True,
+            # AttnCRFDecoder params
+            key_dim=64,
+            val_dim=64,
+            num_heads=3,
+            input_dropout=0.5,
+            # Global params
+            use_cuda=True
+    ):
         encoder = BertEmbedder.create(
-            bert_config_file, init_checkpoint_pt, embedding_dim, use_cuda, bert_mode, freeze)
+            embedding_dim,
+            use_cuda,
+            bert_mode,
+            freeze
+        )
         decoder = AttnCRFDecoder.create(
             label_size, embedding_dim, input_dropout, key_dim, val_dim, num_heads)
         return cls(encoder, decoder, use_cuda)
@@ -182,22 +206,32 @@ class BertBiLSTMAttnNMT(NerModel):
         return self.decoder.score(output, batch[-2], batch[-1])
 
     @classmethod
-    def create(cls,
-               label_size,
-               # BertEmbedder params
-               bert_config_file, init_checkpoint_pt, embedding_dim=768, bert_mode="weighted",
-               freeze=True,
-               # BertBiLSTMEncoder params
-               enc_hidden_dim=128, rnn_layers=1,
-               # NMTDecoder params
-               dec_embedding_dim=64, dec_hidden_dim=256, dec_rnn_layers=1,
-               input_dropout=0.5, pad_idx=0,
-               # Global params
-               use_cuda=True,
-               # Meta
-               meta_dim=None):
+    def create(
+            cls,
+            label_size,
+            embedding_dim=768,
+            bert_mode="weighted",
+            freeze=True,
+            # BertBiLSTMEncoder params
+            enc_hidden_dim=128,
+            rnn_layers=1,
+            # NMTDecoder params
+            dec_embedding_dim=64,
+            dec_hidden_dim=256,
+            dec_rnn_layers=1,
+            input_dropout=0.5,
+            pad_idx=0,
+            # Global params
+            use_cuda=True,
+            # Meta
+            meta_dim=None
+    ):
         embedder = BertEmbedder.create(
-            bert_config_file, init_checkpoint_pt, embedding_dim, use_cuda, bert_mode, freeze)
+            embedding_dim,
+            use_cuda,
+            bert_mode,
+            freeze
+        )
         if meta_dim is None:
             encoder = BertBiLSTMEncoder.create(embedder, enc_hidden_dim, rnn_layers, use_cuda)
         else:
@@ -219,22 +253,32 @@ class BertBiLSTMAttnNMTCRF(NerModel):
         return self.decoder.score(output, batch[-2], batch[-1])
 
     @classmethod
-    def create(cls,
-               label_size,
-               # BertEmbedder params
-               bert_config_file, init_checkpoint_pt, embedding_dim=768, bert_mode="weighted",
-               freeze=True,
-               # BertBiLSTMEncoder params
-               enc_hidden_dim=128, rnn_layers=1,
-               # NMTDecoder params
-               dec_embedding_dim=64, dec_hidden_dim=256, dec_rnn_layers=1,
-               input_dropout=0.5, pad_idx=0,
-               # Global params
-               use_cuda=True,
-               # Meta
-               meta_dim=None):
+    def create(
+            cls,
+            label_size,
+            embedding_dim=768,
+            bert_mode="weighted",
+            freeze=True,
+            # BertBiLSTMEncoder params
+            enc_hidden_dim=128,
+            rnn_layers=1,
+            # NMTDecoder params
+            dec_embedding_dim=64,
+            dec_hidden_dim=256,
+            dec_rnn_layers=1,
+            input_dropout=0.5,
+            pad_idx=0,
+            # Global params
+            use_cuda=True,
+            # Meta
+            meta_dim=None
+    ):
         embedder = BertEmbedder.create(
-            bert_config_file, init_checkpoint_pt, embedding_dim, use_cuda, bert_mode, freeze)
+            embedding_dim,
+            use_cuda,
+            bert_mode,
+            freeze
+        )
         if meta_dim is None:
             encoder = BertBiLSTMEncoder.create(embedder, enc_hidden_dim, rnn_layers, use_cuda)
         else:
@@ -256,22 +300,32 @@ class BertBiLSTMAttnCRFJoint(NerModel):
         return self.decoder.score(output, batch[-2], batch[-1], batch[-3])
 
     @classmethod
-    def create(cls,
-               label_size, intent_size,
-               # BertEmbedder params
-               bert_config_file, init_checkpoint_pt, embedding_dim=768, bert_mode="weighted",
-               freeze=True,
-               # BertBiLSTMEncoder params
-               enc_hidden_dim=128, rnn_layers=1,
-               # AttnCRFDecoder params
-               key_dim=64, val_dim=64, num_heads=3,
-               input_dropout=0.5,
-               # Global params
-               use_cuda=True,
-               # Meta
-               meta_dim=None):
+    def create(
+            cls,
+            label_size,
+            intent_size,
+            embedding_dim=768,
+            bert_mode="weighted",
+            freeze=True,
+            # BertBiLSTMEncoder params
+            enc_hidden_dim=128,
+            rnn_layers=1,
+            # AttnCRFDecoder params
+            key_dim=64,
+            val_dim=64,
+            num_heads=3,
+            input_dropout=0.5,
+            # Global params
+            use_cuda=True,
+            # Meta
+            meta_dim=None
+    ):
         embedder = BertEmbedder.create(
-            bert_config_file, init_checkpoint_pt, embedding_dim, use_cuda, bert_mode, freeze)
+            embedding_dim,
+            use_cuda,
+            bert_mode,
+            freeze
+        )
         if meta_dim is None:
             encoder = BertBiLSTMEncoder.create(embedder, enc_hidden_dim, rnn_layers, use_cuda)
         else:
@@ -293,22 +347,32 @@ class BertBiLSTMAttnNMTJoint(NerModel):
         return self.decoder.score(output, batch[-2], batch[-1], batch[-3])
 
     @classmethod
-    def create(cls,
-               label_size, intent_size,
-               # BertEmbedder params
-               bert_config_file, init_checkpoint_pt, embedding_dim=768, bert_mode="weighted",
-               freeze=True,
-               # BertBiLSTMEncoder params
-               enc_hidden_dim=128, rnn_layers=1,
-               # NMTDecoder params
-               dec_embedding_dim=64, dec_hidden_dim=256, dec_rnn_layers=1,
-               input_dropout=0.5, pad_idx=0,
-               # Global params
-               use_cuda=True,
-               # Meta
-               meta_dim=None):
+    def create(
+            cls,
+            label_size,
+            intent_size,
+            embedding_dim=768,
+            bert_mode="weighted",
+            freeze=True,
+            # BertBiLSTMEncoder params
+            enc_hidden_dim=128,
+            rnn_layers=1,
+            # NMTDecoder params
+            dec_embedding_dim=64,
+            dec_hidden_dim=256,
+            dec_rnn_layers=1,
+            input_dropout=0.5,
+            pad_idx=0,
+            # Global params
+            use_cuda=True,
+            # Meta
+            meta_dim=None):
         embedder = BertEmbedder.create(
-            bert_config_file, init_checkpoint_pt, embedding_dim, use_cuda, bert_mode, freeze)
+            embedding_dim,
+            use_cuda,
+            bert_mode,
+            freeze
+        )
         if meta_dim is None:
             encoder = BertBiLSTMEncoder.create(embedder, enc_hidden_dim, rnn_layers, use_cuda)
         else:
@@ -330,24 +394,34 @@ class BertBiLSTMAttnNCRFJoint(NerModel):
         return self.decoder.score(output, batch[-2], batch[-1], batch[-3])
 
     @classmethod
-    def create(cls,
-               label_size, intent_size,
-               # BertEmbedder params
-               bert_config_file, init_checkpoint_pt, embedding_dim=768, bert_mode="weighted",
-               freeze=True,
-               # BertBiLSTMEncoder params
-               enc_hidden_dim=128, rnn_layers=1,
-               # AttnNCRFDecoder params
-               key_dim=64, val_dim=64, num_heads=3,
-               input_dropout=0.5,
-               # Global params
-               use_cuda=True,
-               # Meta
-               meta_dim=None,
-               # NCRFpp
-               nbest=8):
+    def create(
+            cls,
+            label_size,
+            intent_size,
+            embedding_dim=768,
+            bert_mode="weighted",
+            freeze=True,
+            # BertBiLSTMEncoder params
+            enc_hidden_dim=128,
+            rnn_layers=1,
+            # AttnNCRFDecoder params
+            key_dim=64,
+            val_dim=64,
+            num_heads=3,
+            input_dropout=0.5,
+            # Global params
+            use_cuda=True,
+            # Meta
+            meta_dim=None,
+            # NCRFpp
+            nbest=8
+    ):
         embedder = BertEmbedder.create(
-            bert_config_file, init_checkpoint_pt, embedding_dim, use_cuda, bert_mode, freeze)
+            embedding_dim,
+            use_cuda,
+            bert_mode,
+            freeze
+        )
         if meta_dim is None:
             encoder = BertBiLSTMEncoder.create(embedder, enc_hidden_dim, rnn_layers, use_cuda)
         else:
@@ -369,24 +443,33 @@ class BertBiLSTMAttnNCRF(NerModel):
         return self.decoder.score(output, batch[-2], batch[-1])
 
     @classmethod
-    def create(cls,
-               label_size,
-               # BertEmbedder params
-               bert_config_file, init_checkpoint_pt, embedding_dim=768, bert_mode="weighted",
-               freeze=True,
-               # BertBiLSTMEncoder params
-               enc_hidden_dim=128, rnn_layers=1,
-               # AttnNCRFDecoder params
-               key_dim=64, val_dim=64, num_heads=3,
-               input_dropout=0.5,
-               # Global params
-               use_cuda=True,
-               # Meta
-               meta_dim=None,
-               # NCRFpp
-               nbest=8):
+    def create(
+            cls,
+            label_size,
+            embedding_dim=768,
+            bert_mode="weighted",
+            freeze=True,
+            # BertBiLSTMEncoder params
+            enc_hidden_dim=128,
+            rnn_layers=1,
+            # AttnNCRFDecoder params
+            key_dim=64,
+            val_dim=64,
+            num_heads=3,
+            input_dropout=0.5,
+            # Global params
+            use_cuda=True,
+            # Meta
+            meta_dim=None,
+            # NCRFpp
+            nbest=8
+    ):
         embedder = BertEmbedder.create(
-            bert_config_file, init_checkpoint_pt, embedding_dim, use_cuda, bert_mode, freeze)
+            embedding_dim,
+            use_cuda,
+            bert_mode,
+            freeze
+        )
         if meta_dim is None:
             encoder = BertBiLSTMEncoder.create(embedder, enc_hidden_dim, rnn_layers, use_cuda)
         else:
@@ -407,22 +490,29 @@ class BertBiLSTMNCRF(NerModel):
         return self.decoder.score(output, batch[-2], batch[-1])
 
     @classmethod
-    def create(cls,
-               label_size,
-               # BertEmbedder params
-               bert_config_file, init_checkpoint_pt, embedding_dim=768, bert_mode="weighted",
-               freeze=True,
-               # BertBiLSTMEncoder params
-               enc_hidden_dim=128, rnn_layers=1,
-               input_dropout=0.5,
-               # Global params
-               use_cuda=True,
-               # Meta
-               meta_dim=None,
-               # NCRFpp
-               nbest=8):
+    def create(
+            cls,
+            label_size,
+            embedding_dim=768,
+            bert_mode="weighted",
+            freeze=True,
+            # BertBiLSTMEncoder params
+            enc_hidden_dim=128,
+            rnn_layers=1,
+            input_dropout=0.5,
+            # Global params
+            use_cuda=True,
+            # Meta
+            meta_dim=None,
+            # NCRFpp
+            nbest=8
+    ):
         embedder = BertEmbedder.create(
-            bert_config_file, init_checkpoint_pt, embedding_dim, use_cuda, bert_mode, freeze)
+            embedding_dim,
+            use_cuda,
+            bert_mode,
+            freeze
+        )
         if meta_dim is None:
             encoder = BertBiLSTMEncoder.create(embedder, enc_hidden_dim, rnn_layers, use_cuda)
         else:
