@@ -292,7 +292,7 @@ def text_array_for_predict(input_text_arr: list, learner):
         input_text = input_text_arr[idx]
         import itertools
         ed = pointer + size
-        pred_labels = itertools.chain(span_preds[pointer:ed])
+        pred_labels = itertools.chain(*span_preds[pointer:ed])
         pointer = ed
 
         result = tokenizer.recover_text(
