@@ -407,7 +407,7 @@ class BailianTokenizer(object):
         return False
 
     # 预测专用，输出假label
-    def tokenize_for_predict(self, text, max_seq_len):
+    def tokenize_for_predict(self, text, max_seq_len=128):
         tokens, marker = self.tokenize(text)
 
         last_punctuation_idx = -1
@@ -419,7 +419,6 @@ class BailianTokenizer(object):
             if len(token) == 1 and tokenization._is_punctuation(token):
                 last_punctuation_idx = len(cache)
 
-            cache.append(token)
             # 训练的max_seq_len需要比这个加1
             if len(cache) > max_seq_len - 1:
                 if last_punctuation_idx != -1:
@@ -434,15 +433,13 @@ class BailianTokenizer(object):
                 results.append([
                     ' '.join(target),
                     ' '.join(['O'] * len(target))
-                ]
-                )
+                ])
 
         if len(cache) != 0:
             target = cache
             results.append([
                 ' '.join(target),
                 ' '.join(['O'] * len(target))
-            ]
-            )
+            ])
 
         return results, marker
