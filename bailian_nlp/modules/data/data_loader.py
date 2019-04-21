@@ -282,8 +282,8 @@ def text_array_for_predict(input_text_arr: list, learner):
         cuda=cuda)
 
     preds = learner.predict(dl)
-    from ..utils.utils import bert_labels2tokens, first_choicer, tokens2spans
-    tokens, labels = bert_labels2tokens(dl, preds, fn=first_choicer)
+    from ..utils.utils import bert_labels2tokens, tokens2spans
+    tokens, labels = bert_labels2tokens(dl, preds)
     span_preds = tokens2spans(tokens, labels)
 
     pointer = 0
