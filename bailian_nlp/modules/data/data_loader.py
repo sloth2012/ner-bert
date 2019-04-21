@@ -282,31 +282,37 @@ def text_array_for_predict(input_text_arr: list, learner):
         cuda=cuda)
 
     preds = learner.predict(dl)
-    from ..utils.utils import bert_labels2tokens, tokens2spans
-    tokens, labels = bert_labels2tokens(dl, preds)
-    span_preds = tokens2spans(tokens, labels)
 
     pointer = 0
     results = []
     for idx, (size, sen_marker) in enumerate(marker):
         input_text = input_text_arr[idx]
-        import itertools
         ed = pointer + size
 
-        pred_labels = [
+        labels = [
             lab
-            for (tok, lab) in itertools.chain(*span_preds[pointer:ed])
+            for i in range(pointer, ed)
+            for k, lab in enumerate(preds[i])
+            if k != 0
         ]
+
+        tokens = [
+            tok
+            for i in range(pointer, ed)
+            for k, tok in enumerate(dl.dataset[i].bert_tokens)
+            if k != 0
+        ]
+
         pointer = ed
 
-        result = tokenizer.recover_text(
+        span_tokens, span_labels = tokenizer.recover_text_striped(
             input_text,
-            tokens=
-            pred_labels,
+            tokens=tokens,
+            labels=labels,
             marker=sent_marker
         )
 
-        results.append(result)
+        results.append(list(zip(span_tokens, span_labels)))
 
     return results
 

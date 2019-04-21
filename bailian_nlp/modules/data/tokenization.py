@@ -48,7 +48,7 @@ class BailianTokenizer(object):
             vocab_file=None,
             unk_token=UNKNOWN_CHAR,
             do_lower_case=True,
-            max_input_chars_per_word=200
+            max_input_chars_per_word=100
     ):
         if vocab_file is None:
             from ...released.settings import CHINESE_BERT_VOCAB_FILE
@@ -120,18 +120,9 @@ class BailianTokenizer(object):
         idx = index
         if len(token) > self.max_input_chars_per_word:
             # 这里转换为成未知字符时，长度可能溢出，也可能变短
-            if len(self.unk_token) >= len(token):
-                marker.append((
-                    1, (idx, idx + len(token))
-                ))
-            else:
-                marker.append((
-                    1, (idx, idx + len(self.unk_token))
-                ))
-                marker.append((
-                    0, (idx + len(self.unk_token), idx + len(token))
-                ))
-
+            marker.append((
+                1, (idx, idx + len(token))
+            ))
             output_tokens.append(self.unk_token)
 
         else:
@@ -159,18 +150,9 @@ class BailianTokenizer(object):
 
             if is_bad:
                 # 这里转换为成未知字符时，长度可能溢出，也可能变短
-                if len(self.unk_token) >= len(token):
-                    marker.append((
-                        1, (idx, idx + len(token))
-                    ))
-                else:
-                    marker.append((
-                        1, (idx, idx + len(self.unk_token))
-                    ))
-                    marker.append((
-                        0, (idx + len(self.unk_token), idx + len(token))
-                    ))
-
+                marker.append((
+                    1, (idx, idx + len(token))
+                ))
                 output_tokens.append(self.unk_token)
 
             else:
@@ -241,7 +223,7 @@ class BailianTokenizer(object):
                 elif unicodedata.category(char) == 'Mn':
                     # 表示这种特殊元音去除的情况，也可能出现在后面的某个区间内
                     marker.append((
-                        -1, (idx, idx + 1)
+                        -2, (idx, idx + 1)
                     ))
                     continue
 
@@ -268,84 +250,104 @@ class BailianTokenizer(object):
 
     # 用于恢复粗粒度的文本
     @staticmethod
-    def recover_text(text, tokens, labels, marker, default_label='S_w'):
+    def recover_text_striped(text, tokens, labels, marker, default_label='w'):
 
         assert len(tokens) == len(labels) and len(marker) >= len(tokens)
-        cache = []
 
-        restore_labels = []
+        # 有效token指针
         pointer = 0
+        cache_marker = []
+
+        # 最终结果
+        span_tokens = []
+        span_labels = []
+
+        # 中间变量
+        cache_tokens = []
+        strip_offset = 0
+
+        cache_label = None
 
         for idx, (tp, (st, ed)) in enumerate(marker):
             if tp == 1:
-                # print(st, ed, cache)
-                for cache_st, cache_ed in cache:
-                    if cache_ed <= st:
-                        restore_labels.append((
-                            text[cache_st: cache_ed], default_label
-                        ))
+                temp_offset = strip_offset
+                current_prefix, current_label = labels[pointer].split('_')
 
+                if (current_label == cache_label and current_prefix in ['I', 'E']) or cache_label is None:
+                    do_append = True
+                else:
+                    do_append = False
+                    # 说明为新的开始，这时应该将已有的处理下
+                    span_tokens.append(''.join(cache_tokens))
+                    span_labels.append(cache_label)
+                    cache_tokens = []
+
+                cache_remover = []
+                accent_counter = 0
+                # 先找到有效原token
+                for cache_tp, cache_st, cache_ed in cache_marker:
+
+                    # 这种情况一般发生在tp=1第一个位置
+                    if cache_ed <= st + strip_offset \
+                            or (cache_st == st + strip_offset and cache_ed <= ed + temp_offset):
+                        token = text[cache_st:cache_ed]
+                        # 这种一般都是tp为0,空格、控制符之类的，所以为绝对位置索引，无需考虑间断的strip数量
+                        if not do_append:
+                            # 表示为元音字，需要补充在上一个token后面以供还原
+                            if cache_tp == -2 and len(span_tokens) > 0:
+                                span_tokens[-1] += token
+                                accent_counter += 1
+                                temp_offset += cache_ed - cache_st
+                            else:
+                                span_tokens.append(token)
+                                span_labels.append(default_label)
+                        else:
+                            if cache_label is None:
+                                span_tokens.append(token)
+                                span_labels.append(default_label)
+                            else:
+                                cache_tokens.append(token)
+
+                        cache_remover.append((cache_tp, cache_st, cache_ed))
+                    elif cache_st >= st + strip_offset and cache_ed <= ed + temp_offset:
+                        temp_offset += cache_ed - cache_st
+
+                        cache_remover.append((cache_tp, cache_st, cache_ed))
                     else:
-                        ed += (cache_ed - cache_st)
+                        break
 
-                restore_labels.append((
-                    text[st:ed], labels[pointer]
-                ))
+                [cache_marker.remove(c) for c in cache_remover]
+                # print('marker', pointer)
+                # print(idx, st, ed, strip_offset, text[st + strip_offset: ed + strip_offset])
+                # print(text[st + strip_offset: ed + strip_offset])
+                # print('**************************')
+                token = text[st + strip_offset + accent_counter: ed + temp_offset]
+
+                cache_tokens.append(token)
+
+                cache_label = current_label
                 pointer += 1
-
-                cache = []
+                strip_offset = temp_offset
             else:
-                cache.append((st, ed))
+                cache_marker.append((tp, st, ed))
 
-        if len(cache) != 0:
-            for cache_st, cache_ed in cache:
-                restore_labels.append((
-                    text[cache_st:cache_ed], default_label
-                ))
+                # 目前trip的marker位置都是绝对位置，无需添加offset
+                strip_offset = 0
 
-        return restore_labels
+        if len(cache_marker) != 0:
+            for cache_tp, cache_st, cache_ed in cache_marker:
+                token = text[cache_st:cache_ed]
+                if cache_tp == -2 and len(cache_tokens) > 0:
+                    cache_tokens[-1] += token
+                else:
+                    if len(cache_tokens) != 0:
+                        span_tokens.append(''.join(cache_tokens))
+                        span_labels.append(cache_label)
+                        cache_tokens = []
+                    span_tokens.append(token)
+                    span_labels.append(default_label)
 
-    # 用于恢复粗粒度的文本
-    @staticmethod
-    def recover_text_striped(text, tokens, labels, marker, default_label='S_w'):
-
-        assert len(tokens) == len(labels) and len(marker) >= len(tokens)
-        cache = []
-
-        ori_tokens = []
-        ori_labels = []
-
-        restore_labels = []
-        pointer = 0
-
-        for idx, (tp, (st, ed)) in enumerate(marker):
-            if tp == 1:
-                # print(st, ed, cache)
-                for cache_st, cache_ed in cache:
-                    if cache_ed <= st:
-                        restore_labels.append((
-                            text[cache_st: cache_ed], default_label
-                        ))
-
-                    else:
-                        ed += (cache_ed - cache_st)
-
-                restore_labels.append((
-                    text[st:ed], labels[pointer]
-                ))
-                pointer += 1
-
-                cache = []
-            else:
-                cache.append((st, ed))
-
-        if len(cache) != 0:
-            for cache_st, cache_ed in cache:
-                restore_labels.append((
-                    text[cache_st:cache_ed], default_label
-                ))
-
-        return restore_labels
+        return span_tokens, span_labels
 
     # 用于从词性文本构造符合格式的训练数据，用于训练阶段的数据处理
     def tokenize_with_pos_text(self, pos_sent):
