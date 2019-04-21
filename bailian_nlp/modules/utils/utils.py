@@ -2,10 +2,10 @@ from collections import Counter
 import numpy as np
 
 
-def voting_choicer(tok_map, labels):
+def voting_choicer(tokens, labels):
     label = []
     prev_idx = 0
-    for origin_idx in tok_map:
+    for origin_idx in tokens:
         votes = []
         for l in labels[prev_idx:origin_idx]:
             vote = "I_O"
@@ -28,10 +28,10 @@ def voting_choicer(tok_map, labels):
     return label
 
 
-def first_choicer(tok_map, labels):
+def first_choicer(tokens, labels):
     label = []
     prev_idx = 0
-    for origin_idx in tok_map:
+    for origin_idx in tokens:
         l = labels[prev_idx]
         if l in ["X"]:
             l = "B_O"
@@ -53,7 +53,7 @@ def bert_labels2tokens(dl, labels, fn=voting_choicer):
     res_labels = []
 
     for f, l in zip(dl.dataset, labels):
-        label = fn(f.tok_map, l)
+        label = fn(f.bert_tokens, l)
 
         res_tokens.append(f.tokens[1:])
         res_labels.append(label[1:])

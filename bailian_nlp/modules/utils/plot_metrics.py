@@ -101,8 +101,8 @@ def analyze_bert_errors(dl, labels, fn=voting_choicer):
     res_labels = []
     r_labels = [x.labels for x in dl.dataset]
     for f, l_, rl in zip(dl.dataset, labels, r_labels):
-        label = fn(f.tok_map, l_)
-        label_r = fn(f.tok_map, rl)
+        label = fn(f.bert_tokens, l_)
+        label_r = fn(f.bert_tokens, rl)
         prev_idx = 0
         errors_ = []
         # if len(label_r) > 1:
