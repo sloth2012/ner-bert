@@ -442,4 +442,5 @@ class BailianTokenizer(object):
                 ' '.join(['O'] * len(target))
             ])
 
+        print(results, marker)
         return results, marker
