@@ -1,7 +1,7 @@
 import numpy as np
 from collections import defaultdict
 from matplotlib import pyplot as plt
-from .utils import tokens2spans, bert_labels2tokens, voting_choicer, first_choicer
+from .utils import tokens2spans, bert_labels2tokens
 from sklearn_crfsuite.metrics import flat_classification_report
 
 
@@ -63,10 +63,10 @@ def get_mean_max_metric(history, metric_="f1", return_idx=False):
     return res
 
 
-def get_bert_span_report(dl, preds, ignore_labels=["O"], fn=first_choicer):
-    tokens, labels = bert_labels2tokens(dl, preds, fn)
+def get_bert_span_report(dl, preds, ignore_labels=["O"]):
+    tokens, labels = bert_labels2tokens(dl, preds)
     spans_pred = tokens2spans(tokens, labels)
-    tokens, labels = bert_labels2tokens(dl, [x.labels for x in dl.dataset], fn)
+    tokens, labels = bert_labels2tokens(dl, [x.labels for x in dl.dataset])
     spans_true = tokens2spans(tokens, labels)
     set_labels = set()
     for idx in range(len(spans_pred)):
@@ -94,31 +94,3 @@ def get_elmo_span_report(dl, preds, ignore_labels=["O"]):
     set_labels -= set(ignore_labels)
     return flat_classification_report([[y[1] for y in x] for x in spans_true], [[y[1] for y in x] for x in spans_pred], labels=list(set_labels), digits=3)
 
-
-def analyze_bert_errors(dl, labels, fn=voting_choicer):
-    errors = []
-    res_tokens = []
-    res_labels = []
-    r_labels = [x.labels for x in dl.dataset]
-    for f, l_, rl in zip(dl.dataset, labels, r_labels):
-        label = fn(f.bert_tokens, l_)
-        label_r = fn(f.bert_tokens, rl)
-        prev_idx = 0
-        errors_ = []
-        # if len(label_r) > 1:
-        # assert len(label_r) == len(f.tokens) - 1
-        for idx, (l, rl, t) in enumerate(zip(label, label_r, f.tokens)):
-            if l != rl:
-                errors_.append({"token: ": t,
-                               "real_label": rl,
-                               "pred_label": l,
-                               "bert_token": f.bert_tokens[prev_idx:f.tok_map[idx]],
-                               "real_bert_label": f.labels[prev_idx:f.tok_map[idx]],
-                               "pred_bert_label": l_[prev_idx:f.tok_map[idx]], 
-                               "text_example": " ".join(f.tokens[1:-1]),
-                                "labels": " ".join(label_r[1:])})
-            prev_idx = f.tok_map[idx]
-        errors.append(errors_)
-        res_tokens.append(f.tokens[1:-1])
-        res_labels.append(label[1:])
-    return res_tokens, res_labels, errors

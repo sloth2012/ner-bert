@@ -1,62 +1,14 @@
-from collections import Counter
+# coding: utf8
 import numpy as np
 
 
-def voting_choicer(tokens, labels):
-    label = []
-    prev_idx = 0
-    for origin_idx in tokens:
-        votes = []
-        for l in labels[prev_idx:origin_idx]:
-            vote = "I_O"
-            if l not in ["[CLS]", "[SEP]", "X"]:
-                vote = "I_" + l.split("_")[1]
-            if l != "X":
-                votes.append(vote)
-        vote_labels = Counter(votes)
-        if not len(vote_labels):
-            vote_labels = {"I_O": 1}
-        # vote_labels = Counter(c)
-        lb = sorted(list(vote_labels), key=lambda x: vote_labels[x])
-        if len(lb):
-            label.append(lb[-1])
-        prev_idx = origin_idx
-        if origin_idx < 0:
-            break
-    assert "[SEP]" not in label
-    
-    return label
-
-
-def first_choicer(tokens, labels):
-    label = []
-    prev_idx = 0
-    for origin_idx in tokens:
-        l = labels[prev_idx]
-        if l in ["X"]:
-            l = "B_O"
-        if l == "B_O":
-            for ll in labels[prev_idx + 1:origin_idx]:
-                if ll not in ["B_O", "I_O", "X"]:
-                    l = ll
-                    break
-        label.append(l)
-        prev_idx = origin_idx
-        if origin_idx < 0:
-            break
-    # assert "[SEP]" not in label
-    return label
-
-
-def bert_labels2tokens(dl, labels, fn=voting_choicer):
+def bert_labels2tokens(dl, labels):
     res_tokens = []
     res_labels = []
 
     for f, l in zip(dl.dataset, labels):
-        label = fn(f.bert_tokens, l)
-
         res_tokens.append(f.tokens[1:])
-        res_labels.append(label[1:])
+        res_labels.append(l[1:])
 
     return res_tokens, res_labels
 
