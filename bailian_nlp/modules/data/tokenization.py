@@ -355,10 +355,9 @@ class BailianTokenizer(object):
         pos_marker = []
         pointer = 0
         for word, flag in self.pos_pattern.findall(pos_sent):
-            pointer += 1
             sent += word
             pos_marker.extend([(flag, pointer)] * len(word))
-
+            pointer += 1
         tokens, marker = self.tokenize(sent)
         cache = []
         cache_labels = []

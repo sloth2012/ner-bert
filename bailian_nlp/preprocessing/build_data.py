@@ -165,11 +165,15 @@ def build_pos_train_and_valid_data():
         total_counter = 0
         error_counter = 0
         for k, fin in enumerate(fins):
+            if total_counter > 1000:
+                continue
             for line in fin:
                 line = line.strip()
                 if not line:
                     continue
                 total_counter += 1
+                if total_counter > 1000:
+                    break
                 import random
                 score = random.random()
 
