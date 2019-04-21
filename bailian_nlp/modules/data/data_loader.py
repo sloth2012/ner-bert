@@ -298,7 +298,8 @@ def text_array_for_predict(input_text_arr: list, learner):
         result = tokenizer.recover_text(
             input_text,
             dl.dataset[idx].bert_tokens,
-            pred_labels
+            pred_labels,
+            marker=sent_marker
         )
 
         results.append(result)
