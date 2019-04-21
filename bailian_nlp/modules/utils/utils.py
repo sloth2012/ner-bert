@@ -7,7 +7,7 @@ def bert_labels2tokens(dl, labels):
     res_labels = []
 
     for f, l in zip(dl.dataset, labels):
-        res_tokens.append(f.tokens[1:])
+        res_tokens.append(f.bert_tokens[1:])
         res_labels.append(l[1:])
 
     return res_tokens, res_labels
