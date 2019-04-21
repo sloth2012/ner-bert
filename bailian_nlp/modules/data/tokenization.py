@@ -266,8 +266,9 @@ class BailianTokenizer(object):
 
         return split_tokens, marker
 
-    # 用于恢复文本
-    def recover_text(self, text, tokens, labels, marker, default_label='w'):
+    # 用于恢复粗粒度的文本
+    @staticmethod
+    def recover_text(text, tokens, labels, marker, default_label='S_w'):
 
         assert len(tokens) == len(labels) and len(marker) >= len(tokens)
         cache = []
@@ -279,11 +280,49 @@ class BailianTokenizer(object):
             if tp == 1:
                 # print(st, ed, cache)
                 for cache_st, cache_ed in cache:
-                    if cache_ed < st:
+                    if cache_ed <= st:
                         restore_labels.append((
                             text[cache_st: cache_ed], default_label
                         ))
-                    elif cache_ed == st:
+
+                    else:
+                        ed += (cache_ed - cache_st)
+
+                restore_labels.append((
+                    text[st:ed], labels[pointer]
+                ))
+                pointer += 1
+
+                cache = []
+            else:
+                cache.append((st, ed))
+
+        if len(cache) != 0:
+            for cache_st, cache_ed in cache:
+                restore_labels.append((
+                    text[cache_st:cache_ed], default_label
+                ))
+
+        return restore_labels
+
+    # 用于恢复粗粒度的文本
+    @staticmethod
+    def recover_text_striped(text, tokens, labels, marker, default_label='S_w'):
+
+        assert len(tokens) == len(labels) and len(marker) >= len(tokens)
+        cache = []
+
+        ori_tokens = []
+        ori_labels = []
+
+        restore_labels = []
+        pointer = 0
+
+        for idx, (tp, (st, ed)) in enumerate(marker):
+            if tp == 1:
+                # print(st, ed, cache)
+                for cache_st, cache_ed in cache:
+                    if cache_ed <= st:
                         restore_labels.append((
                             text[cache_st: cache_ed], default_label
                         ))

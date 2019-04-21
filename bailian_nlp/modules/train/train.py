@@ -63,7 +63,6 @@ def transformed_result(preds, mask, id2label, target_all=None, pad_idx=0):
     if target_all is not None:
         return preds_cpu, targets_cpu
     else:
-
         return preds_cpu
 
 
