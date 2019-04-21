@@ -259,7 +259,7 @@ def text_array_for_predict(input_text_arr: list, learner):
     format_text_arr = []
 
     for index, input_text in enumerate(input_text_arr):
-        print(input_text)
+        print(input_text, learner.data.max_seq_len - 2)
         sents, sent_marker = tokenizer.tokenize_for_predict(input_text, max_seq_len=learner.data.max_seq_len - 2),
         format_text_arr.extend(sents)
         marker.append((len(sents), sent_marker))
