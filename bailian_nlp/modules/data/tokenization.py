@@ -462,8 +462,8 @@ class BailianTokenizer(object):
 
         assert len(tokens) == len(labels)
 
-        for token, label in zip(tokens, labels):
-            print(token, label)
+        # for token, label in zip(tokens, labels):
+        #     print(token, label)
 
         return tokens, labels
 
