@@ -195,7 +195,7 @@ def build_pos_train_and_valid_data():
                     raise
                 except:
                     error_counter += 1
-                    if total_counter % 1000 == 0:
+                    if total_counter % 100 == 0:
                         print(error_counter, total_counter, error_counter/total_counter)
                     continue
 

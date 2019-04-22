@@ -434,8 +434,6 @@ class BailianTokenizer(object):
                 size = len(cache_marker)
                 if size == 1:
                     label = last_label
-                    if label in ['nt', 'ti', 'nr', 'ns', 'nz']:
-                        label = 'xx'
                     labels.append(f'S_{label}')
                 elif size > 1:
                     label = last_label
