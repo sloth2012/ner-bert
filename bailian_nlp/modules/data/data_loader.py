@@ -137,57 +137,64 @@ def get_data(
     all_args = [df["0"].tolist(), df["1"].tolist()]
     total = len(df)
     for args in tqdm(enumerate(zip(*all_args)), total=total, desc="bert data"):
-        idx, (text, text_label) = args
+        try:
+            idx, (text, text_label) = args
 
-        bert_tokens = []
-        bert_labels = []
-        bert_tokens.append("[CLS]")
-        bert_labels.append("[CLS]")
+            bert_tokens = []
+            bert_labels = []
+            bert_tokens.append("[CLS]")
+            bert_labels.append("[CLS]")
 
-        tokens = str(text).split()
-        labels = str(text_label).split()
+            tokens = str(text).split()
+            labels = str(text_label).split()
 
-        pad_idx = label2idx[pad]
+            pad_idx = label2idx[pad]
 
-        limit_size = min(max_seq_len - 2, len(tokens))
-        bert_tokens.extend(tokens[:limit_size])
-        bert_labels.extend(labels[:limit_size])
+            limit_size = min(max_seq_len - 2, len(tokens))
+            bert_tokens.extend(tokens[:limit_size])
+            bert_labels.extend(labels[:limit_size])
 
-        input_ids = tokenizer.convert_tokens_to_ids(bert_tokens)
-        for l in bert_labels:
-            if l not in label2idx:
-                label2idx[l] = len(label2idx)
-        labels_ids = [label2idx[l] for l in bert_labels]
+            input_ids = tokenizer.convert_tokens_to_ids(bert_tokens)
+            for l in bert_labels:
+                if l not in label2idx:
+                    label2idx[l] = len(label2idx)
+            labels_ids = [label2idx[l] for l in bert_labels]
 
-        # The mask has 1 for real tokens and 0 for padding tokens. Only real
-        # tokens are attended to.
-        input_mask = [1] * len(input_ids)
-        labels_mask = [1] * len(labels_ids)
-        # Zero-pad up to the sequence length.
-        while len(input_ids) < max_seq_len:
-            input_ids.append(0)
-            input_mask.append(0)
-            labels_ids.append(pad_idx)
-            labels_mask.append(0)
-        # assert len(input_ids) == len(bert_labels_ids)
-        input_type_ids = [0] * len(input_ids)
-        features.append(InputFeatures(
-            # Bert data
-            bert_tokens=bert_tokens,
-            input_ids=input_ids,
-            input_mask=input_mask,
-            input_type_ids=input_type_ids,
-            # Origin data
-            labels=bert_labels,
-            labels_ids=labels_ids,
-            labels_mask=labels_mask,
-        ))
-        assert len(input_ids) == len(input_mask)
-        assert len(input_ids) == len(input_type_ids)
-        if len(input_ids) != len(labels_ids):
-            print(len(input_ids), len(labels_ids), bert_tokens, bert_labels)
-            raise Exception('len(input_ids) != len(labels_ids):')
-        assert len(input_ids) == len(labels_mask)
+            # The mask has 1 for real tokens and 0 for padding tokens. Only real
+            # tokens are attended to.
+            input_mask = [1] * len(input_ids)
+            labels_mask = [1] * len(labels_ids)
+            # Zero-pad up to the sequence length.
+            while len(input_ids) < max_seq_len:
+                input_ids.append(0)
+                input_mask.append(0)
+                labels_ids.append(pad_idx)
+                labels_mask.append(0)
+            # assert len(input_ids) == len(bert_labels_ids)
+            input_type_ids = [0] * len(input_ids)
+            features.append(InputFeatures(
+                # Bert data
+                bert_tokens=bert_tokens,
+                input_ids=input_ids,
+                input_mask=input_mask,
+                input_type_ids=input_type_ids,
+                # Origin data
+                labels=bert_labels,
+                labels_ids=labels_ids,
+                labels_mask=labels_mask,
+            ))
+            assert len(input_ids) == len(input_mask)
+            assert len(input_ids) == len(input_type_ids)
+            if len(input_ids) != len(labels_ids):
+                print(len(input_ids), len(labels_ids), bert_tokens, bert_labels)
+                raise Exception('len(input_ids) != len(labels_ids):')
+            assert len(input_ids) == len(labels_mask)
+
+        except:
+            print(idx, text, text_label)
+            raise
+
+
     return features, label2idx
 
 

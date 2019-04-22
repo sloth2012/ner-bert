@@ -54,6 +54,7 @@ class BailianTokenizer(object):
             from ...released.settings import CHINESE_BERT_VOCAB_FILE
             vocab_file = CHINESE_BERT_VOCAB_FILE
         self.vocab = tokenization.load_vocab(vocab_file)
+        print(self.vocab)
         self.inv_vocab = {v: k for k, v in self.vocab.items()}
         self.do_lower_case = do_lower_case
         self.unk_token = unk_token
@@ -400,10 +401,8 @@ class BailianTokenizer(object):
                         break
 
                 [cache_marker.remove(c) for c in cache_remover]
-                label = pos_marker[st+strip_offset+accent_counter:ed+temp_offset]
+                label = pos_marker[st + strip_offset + accent_counter:ed + temp_offset]
                 cache_labels.append(label)
-
-                token = sent[st+strip_offset+accent_counter:ed+temp_offset]
 
                 strip_offset = temp_offset
 
@@ -411,9 +410,7 @@ class BailianTokenizer(object):
                 cache_marker.append((tp, st, ed))
                 strip_offset = 0
 
-
             last_ed = ed
-
 
         labels = []
         cache_marker = []
