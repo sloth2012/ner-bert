@@ -412,42 +412,43 @@ class BailianTokenizer(object):
             last_ed = ed
 
         labels = []
-        cache_marker = []
-        last_label = []
+        cache_counter = 0
+        last_cache_label = (None, None)
 
         for token, cache_label in zip(tokens, cache_labels):
             current_label = None
-            for idx, (label, pos) in enumerate(cache_label):
+            for idx, lab_pos in enumerate(cache_label):
                 if current_label is None:
-                    current_label = label
+                    current_label = lab_pos
 
-                if current_label != label:
+                if current_label != lab_pos:
                     raise Exception('原有分词与现有tokenizer有冲突')
 
-            if last_label is None or last_label == current_label:
-                cache_marker.append(current_label)
+            if last_cache_label is None or last_cache_label == current_label:
+                cache_counter += 1
             else:
-                size = len(cache_marker)
+                size = cache_counter
                 if size == 1:
-                    label = last_label
+                    label = last_cache_label[0]
                     labels.append(f'S_{label}')
                 elif size > 1:
-                    label = last_label
+                    label = last_cache_label[0]
                     labels.extend(
                         [f'B_{label}']
                         + [f'I_{label}'] * (size - 2)
                         + [f'E_{label}']
                     )
 
-                cache_marker = [current_label]
+                cache_counter = 1
 
-            last_label = current_label
+            last_cache_label = current_label
 
-        size = len(cache_marker)
+        size = cache_counter
         if size == 1:
-            labels.append(f'S_{last_label}')
+            label = last_cache_label[0]
+            labels.append(f'S_{label}')
         elif size > 1:
-            label = last_label
+            label = last_cache_label[0]
             labels.extend(
                 [f'B_{label}']
                 + [f'I_{label}'] * (size - 2)
