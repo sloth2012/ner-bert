@@ -54,7 +54,6 @@ class BailianTokenizer(object):
             from ...released.settings import CHINESE_BERT_VOCAB_FILE
             vocab_file = CHINESE_BERT_VOCAB_FILE
         self.vocab = tokenization.load_vocab(vocab_file)
-        print(self.vocab)
         self.inv_vocab = {v: k for k, v in self.vocab.items()}
         self.do_lower_case = do_lower_case
         self.unk_token = unk_token

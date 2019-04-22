@@ -194,7 +194,6 @@ def get_data(
             print(idx, text, text_label)
             raise
 
-
     return features, label2idx
 
 
@@ -208,8 +207,8 @@ def get_bert_data_loaders(
         max_seq_len=424,
         label2idx=None,
 ):
-    train = pd.read_csv(train, delimiter=DELIMITER)
-    valid = pd.read_csv(valid, delimiter=DELIMITER)
+    train = pd.read_csv(train, delimiter=DELIMITER, na_filter=False)
+    valid = pd.read_csv(valid, delimiter=DELIMITER, na_filter=False)
 
     tokenizer = tokenization.BailianTokenizer(
         vocab_file=vocab_file,
@@ -244,7 +243,7 @@ def get_bert_data_loaders(
 
 
 def get_bert_data_loader_for_predict(path, learner):
-    df = pd.read_csv(path, delimiter=DELIMITER)
+    df = pd.read_csv(path, delimiter=DELIMITER, na_filter=False)
     f, _ = get_data(
         df,
         tokenizer=learner.data.tokenizer,
@@ -376,7 +375,7 @@ class BertData(object):
         :return:
         '''
 
-        df = pd.read_csv(path, delimiter=DELIMITER)
+        df = pd.read_csv(path, delimiter=DELIMITER, na_filter=False)
         features, label2idx = get_data(
             df,
             tokenizer=self.tokenizer,
