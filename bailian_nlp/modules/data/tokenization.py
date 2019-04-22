@@ -251,7 +251,6 @@ class BailianTokenizer(object):
     # 用于恢复粗粒度的文本
     @staticmethod
     def recover_text_striped(text, tokens, labels, marker, default_label='w'):
-
         assert len(tokens) == len(labels) and len(marker) >= len(tokens)
 
         # 有效token指针
@@ -334,6 +333,7 @@ class BailianTokenizer(object):
                 cache_label = current_label
                 pointer += 1
                 strip_offset = temp_offset
+
             else:
                 cache_marker.append((tp, st, ed))
 
@@ -355,9 +355,9 @@ class BailianTokenizer(object):
                     span_tokens.append(token)
                     span_labels.append(default_label)
 
-            if len(cache_tokens) != 0:
-                span_tokens.append(''.join(cache_tokens))
-                span_labels.append(cache_label)
+        if len(cache_tokens) != 0:
+            span_tokens.append(''.join(cache_tokens))
+            span_labels.append(cache_label)
 
         return span_tokens, span_labels
 
