@@ -126,8 +126,10 @@ class BertEmbedder(nn.Module):
                freeze=True
                ):
 
+        logger.info('Loading pretrained bert model!')
         from pytorch_pretrained_bert import BertConfig, BertModel
         bert_config = BertConfig.from_json_file(bert_config_file)
+        logger.info("Model config {}".format(bert_config))
         model = BertModel(bert_config)
 
         if use_cuda and torch.cuda.is_available():
