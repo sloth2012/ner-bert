@@ -195,10 +195,10 @@ def build_pos_train_and_valid_data():
                 except:
                     error_counter += 1
                     if total_counter % 100 == 0:
-                        print(error_counter, total_counter, error_counter/total_counter)
+                        print(error_counter, total_counter, error_counter / total_counter)
                     continue
 
-        print(error_counter, total_counter, error_counter/total_counter)
+        print(error_counter, total_counter, error_counter / total_counter)
 
 
 def build_pos_single_data_from_hanlp_dict():
@@ -318,6 +318,6 @@ def build_pos_single_data_from_hanlp_dict():
 if __name__ == '__main__':
     # build_pos_fake_data()
 
-    # build_pos_single_data_from_hanlp_dict()
+    build_pos_single_data_from_hanlp_dict()
 
-    build_pos_train_and_valid_data()
+    # build_pos_train_and_valid_data()
