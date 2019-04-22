@@ -7,9 +7,11 @@ import json
 from .optimization import BertAdam
 
 logging.basicConfig(level=logging.INFO)
+amp_handle = None
 
 
 def train_step(dl, model, optimizer, lr_scheduler=None, clip=None, num_epoch=1):
+    global amp_handle
     model.train()
     epoch_loss = 0
     idx = 0
@@ -18,7 +20,11 @@ def train_step(dl, model, optimizer, lr_scheduler=None, clip=None, num_epoch=1):
         idx += 1
         model.zero_grad()
         loss = model.score(batch)
-        loss.backward()
+        if amp_handle is not None:
+            with amp_handle.scale_loss(loss, optimizer) as scaled_loss:
+                scaled_loss.backward()
+        else:
+            loss.backward()
         if clip is not None:
             _ = torch.nn.utils.clip_grad_norm(model.parameters(), clip)
         optimizer.step()
@@ -160,6 +166,15 @@ class NerLearner(object):
         self.clip = clip
         self.best_target_metric = 0.
         self.lr_scheduler = None
+
+        global amp_handle
+
+        if amp_handle is None and torch.cuda.device_count() > 0:
+            try:
+                from apex import amp
+                amp_handle = amp_handle.init(enabled=True)
+            except:
+                pass
 
     def save_config(self, path=None):
         path = path if path else self.best_model_path.split('.')[0] + '.json'
