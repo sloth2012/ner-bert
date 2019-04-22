@@ -186,8 +186,8 @@ def build_pos_train_and_valid_data():
                 try:
                     tokens, labels = tokenizer.tokenize_with_pos_text(line)
                     fout.write(DELIMITER.join([
-                        ' '.join(tokens),
-                        ' '.join(labels)
+                        ' '.join(labels),
+                        ' '.join(tokens)
                     ]))
                     fout.write('\n')
                 except KeyboardInterrupt:

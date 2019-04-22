@@ -272,7 +272,7 @@ def text_array_for_predict(input_text_arr: list, learner):
         format_text_arr.extend(sents)
         marker.append((len(sents), sent_marker))
 
-    df = pd.DataFrame(format_text_arr, columns=["0", "1"])
+    df = pd.DataFrame(format_text_arr, columns=["1", "0"])
 
     f, _ = get_data(
         df,
