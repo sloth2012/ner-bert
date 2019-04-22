@@ -161,6 +161,7 @@ class NerLearner(object):
         self.best_target_metric = 0.
         self.lr_scheduler = None
 
+
     def save_config(self, path=None):
         path = path if path else self.best_model_path.split('.')[0] + '.json'
         with open(path, "w") as file:
