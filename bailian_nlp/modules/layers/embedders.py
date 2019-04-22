@@ -6,8 +6,6 @@ import json
 from torch import nn
 import logging
 
-logger = logging.getLogger(__name__)
-
 
 class BertEmbedder(nn.Module):
     # @property
@@ -126,10 +124,10 @@ class BertEmbedder(nn.Module):
                freeze=True
                ):
 
-        logger.info('Loading pretrained bert model!')
+        logging.info('Loading pretrained bert model!')
         from pytorch_pretrained_bert import BertConfig, BertModel
         bert_config = BertConfig.from_json_file(bert_config_file)
-        logger.info("Model config {}".format(bert_config))
+        logging.info("Model config {}".format(bert_config))
         model = BertModel(bert_config)
 
         if use_cuda and torch.cuda.is_available():
@@ -179,10 +177,10 @@ class BertEmbedder(nn.Module):
         load(model, prefix=start_prefix)
 
         if len(missing_keys) > 0:
-            logger.info("Weights of {} not initialized from pretrained model: {}".format(
+            logging.info("Weights of {} not initialized from pretrained model: {}".format(
                 model.__class__.__name__, missing_keys))
         if len(unexpected_keys) > 0:
-            logger.info("Weights from pretrained model not used in {}: {}".format(
+            logging.info("Weights from pretrained model not used in {}: {}".format(
                 model.__class__.__name__, unexpected_keys))
         if len(error_msgs) > 0:
             raise RuntimeError('Error(s) in loading state_dict for {}:\n\t{}'.format(

@@ -173,6 +173,7 @@ class NerLearner(object):
             try:
                 from apex import amp
                 amp_handle = amp_handle.init(enabled=True)
+                logging.info('using apex to speed model!')
             except:
                 pass
 
