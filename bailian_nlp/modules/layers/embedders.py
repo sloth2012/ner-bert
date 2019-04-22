@@ -94,6 +94,17 @@ class BertEmbedder(nn.Module):
         return pp
 
     @classmethod
+    def recover(
+            cls,
+            embedding_dim=768,
+            use_cuda=True,
+            bert_mode="weighted",
+            freeze=True
+    ):
+        from pytorch_pretrained_bert import BertModel
+        pass
+
+    @classmethod
     def create(
             cls,
             embedding_dim=768,

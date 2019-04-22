@@ -148,7 +148,7 @@ def build_pos_train_and_valid_data():
     with open(seg_file) as fin1, \
             open(fake_file) as fin2, \
             open(special_file) as fin3, \
-            open(dict_file, 'w') as fin4, \
+            open(dict_file) as fin4, \
             open(train_path, 'w') as train_f, \
             open(valid_path, 'w') as valid_f, \
             open(test_path, 'w') as test_f:
