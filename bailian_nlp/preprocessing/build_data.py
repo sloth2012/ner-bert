@@ -1,6 +1,7 @@
 # coding: utf8
 import os
 from bailian_nlp.modules.settings import DELIMITER
+from tqdm.auto import tqdm
 
 
 # TODO 整理baidu分词中的url，针对其进行更改
@@ -165,7 +166,7 @@ def build_pos_train_and_valid_data():
         total_counter = 0
         error_counter = 0
         for k, fin in enumerate(fins):
-            for line in fin:
+            for line in tqdm(fin, desc='file'):
                 line = line.strip()
                 if not line:
                     continue
@@ -194,8 +195,11 @@ def build_pos_train_and_valid_data():
                     raise
                 except:
                     error_counter += 1
-                    print(error_counter, total_counter, error_counter/total_counter)
+                    if total_counter % 1000 == 0:
+                        print(error_counter, total_counter, error_counter/total_counter)
                     continue
+
+        print(error_counter, total_counter, error_counter/total_counter)
 
 
 def build_pos_single_data_from_hanlp_dict():
