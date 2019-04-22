@@ -48,7 +48,7 @@ class BailianTokenizer(object):
             vocab_file=None,
             unk_token=UNKNOWN_CHAR,
             do_lower_case=True,
-            max_input_chars_per_word=100
+            max_input_chars_per_word=200
     ):
         if vocab_file is None:
             from ...released.settings import CHINESE_BERT_VOCAB_FILE
