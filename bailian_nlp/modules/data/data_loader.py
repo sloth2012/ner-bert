@@ -138,7 +138,7 @@ def get_data(
     total = len(df)
     for args in tqdm(enumerate(zip(*all_args)), total=total, desc="bert data"):
         try:
-            idx, (text, text_label) = args
+            idx, (text_label, text) = args
 
             bert_tokens = []
             bert_labels = []
