@@ -268,8 +268,12 @@ class BailianTokenizer(object):
 
         cache_label = None
 
+        last_ed = -1
         for idx, (tp, (st, ed)) in enumerate(marker):
             if tp == 1:
+                if last_ed != st:
+                    strip_offset = 0
+
                 temp_offset = strip_offset
                 current_prefix, current_label = labels[pointer].split('_')
 
@@ -292,12 +296,14 @@ class BailianTokenizer(object):
                             or (cache_st == st + strip_offset and cache_ed <= ed + temp_offset):
                         token = text[cache_st:cache_ed]
                         # 这种一般都是tp为0,空格、控制符之类的，所以为绝对位置索引，无需考虑间断的strip数量
+                        if cache_tp == -2 and cache_st == st + strip_offset:
+                            accent_counter += 1
+                            temp_offset += cache_ed - cache_st
+
                         if not do_append:
                             # 表示为元音字，需要补充在上一个token后面以供还原
                             if cache_tp == -2 and len(span_tokens) > 0:
                                 span_tokens[-1] += token
-                                accent_counter += 1
-                                temp_offset += cache_ed - cache_st
                             else:
                                 span_tokens.append(token)
                                 span_labels.append(default_label)
@@ -317,11 +323,11 @@ class BailianTokenizer(object):
                         break
 
                 [cache_marker.remove(c) for c in cache_remover]
-                # print('marker', pointer)
-                # print(idx, st, ed, strip_offset, text[st + strip_offset: ed + strip_offset])
-                # print(text[st + strip_offset: ed + strip_offset])
-                # print('**************************')
                 token = text[st + strip_offset + accent_counter: ed + temp_offset]
+
+                # print('marker', pointer)
+                # print(idx, st, ed, strip_offset, temp_offset,  accent_counter, token)
+                # print('**************************')
 
                 cache_tokens.append(token)
 
@@ -333,6 +339,8 @@ class BailianTokenizer(object):
 
                 # 目前trip的marker位置都是绝对位置，无需添加offset
                 strip_offset = 0
+
+            last_ed = ed
 
         if len(cache_marker) != 0:
             for cache_tp, cache_st, cache_ed in cache_marker:
@@ -347,6 +355,10 @@ class BailianTokenizer(object):
                     span_tokens.append(token)
                     span_labels.append(default_label)
 
+            if len(cache_tokens) != 0:
+                span_tokens.append(''.join(cache_tokens))
+                span_labels.append(cache_label)
+
         return span_tokens, span_labels
 
     # 用于从词性文本构造符合格式的训练数据，用于训练阶段的数据处理
@@ -354,74 +366,105 @@ class BailianTokenizer(object):
         sent = ''
         pos_marker = []
         pointer = 0
+
         for word, flag in self.pos_pattern.findall(pos_sent):
+            # print(repr(word), repr(flag), len(word))
             sent += word
             pos_marker.extend([(flag, pointer)] * len(word))
             pointer += 1
+
         tokens, marker = self.tokenize(sent)
-        cache = []
+        cache_marker = []
         cache_labels = []
 
-        # print(marker)
+        strip_offset = 0
+        last_ed = -1
         for tp, (st, ed) in marker:
             if tp == 1:
-                for cache_st, cache_ed in cache:
-                    if cache_ed < st:
-                        continue
+                if last_ed != st:
+                    strip_offset = 0
 
-                    elif cache_ed > st:
-                        ed += (cache_ed - cache_st)
+                temp_offset = 0
+                cache_remover = []
+                accent_counter = 0
+                for cache_tp, cache_st, cache_ed in cache_marker:
+                    if cache_st == st + strip_offset and cache_ed <= ed + temp_offset:
+                        if cache_tp == -2:
+                            accent_counter += 1
+                            temp_offset += cache_ed - cache_st
+                        cache_remover.append((cache_tp, cache_st, cache_ed))
+                    elif cache_st >= st + strip_offset and cache_ed <= ed + temp_offset:
+                        temp_offset += cache_ed - cache_st
+                        cache_remover.append((cache_tp, cache_st, cache_ed))
+                    else:
+                        break
 
-                cache_labels.append(pos_marker[st:ed])
+                [cache_marker.remove(c) for c in cache_remover]
+                label = pos_marker[st+strip_offset+accent_counter:ed+temp_offset]
+                cache_labels.append(label)
+
+                token = sent[st+strip_offset+accent_counter:ed+temp_offset]
+
+                strip_offset = temp_offset
+
             else:
-                cache.append((st, ed))
+                cache_marker.append((tp, st, ed))
+                strip_offset = 0
+
+
+            last_ed = ed
+
 
         labels = []
-        cache = []
-        last_cache_label = []
-
-        # print('before:', len(tokens), len(cache_labels))
+        cache_marker = []
+        last_label = []
 
         for token, cache_label in zip(tokens, cache_labels):
-            last_label = ''
+            current_label = None
             for idx, (label, pos) in enumerate(cache_label):
-                if last_label == '':
-                    last_label = label
+                if current_label is None:
+                    current_label = label
 
-                if last_label != label:
+                if current_label != label:
                     raise Exception('原有分词与现有tokenizer有冲突')
 
-            if last_cache_label is None or last_cache_label == cache_label:
-                cache.append(last_cache_label)
+            if last_label is None or last_label == current_label:
+                cache_marker.append(current_label)
             else:
-                size = len(cache)
+                size = len(cache_marker)
                 if size == 1:
-                    label = last_label[0]
+                    label = last_label
                     if label in ['nt', 'ti', 'nr', 'ns', 'nz']:
                         label = 'xx'
                     labels.append(f'S_{label}')
                 elif size > 1:
+                    label = last_label
                     labels.extend(
-                        [f'B_{last_label[0]}']
-                        + [f'I_{last_label[0]}'] * (size - 2)
-                        + [f'E_{last_label[0]}']
+                        [f'B_{label}']
+                        + [f'I_{label}'] * (size - 2)
+                        + [f'E_{label}']
                     )
 
-                cache = [cache_label]
+                cache_marker = [current_label]
 
-            last_cache_label = cache_label
+            last_label = current_label
 
-        size = len(cache)
+        size = len(cache_marker)
         if size == 1:
-            labels.append(f'S_{last_label[0]}')
+            labels.append(f'S_{last_label}')
         elif size > 1:
+            label = last_label
             labels.extend(
-                [f'B_{last_label[0]}']
-                + [f'I_{last_label[0]}'] * (size - 2)
-                + [f'E_{flag}']
+                [f'B_{label}']
+                + [f'I_{label}'] * (size - 2)
+                + [f'E_{label}']
             )
 
         assert len(tokens) == len(labels)
+
+        for token, label in zip(tokens, labels):
+            print(token, label)
+
         return tokens, labels
 
     def _is_chinese_char(self, cp):
