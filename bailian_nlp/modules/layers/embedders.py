@@ -2,9 +2,11 @@ import torch
 from gensim.models import KeyedVectors
 import os
 import codecs
-import logging
 import json
 from torch import nn
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class BertEmbedder(nn.Module):
@@ -56,7 +58,7 @@ class BertEmbedder(nn.Module):
             use_cuda=True,
             bert_mode="weighted",
             freeze=True
-            ):
+    ):
         from pytorch_pretrained_bert import BertConfig, BertModel
         bert_config = BertConfig.from_json_file(bert_config_file)
         model = BertModel(bert_config)
@@ -127,6 +129,7 @@ class BertEmbedder(nn.Module):
         from pytorch_pretrained_bert import BertConfig, BertModel
         bert_config = BertConfig.from_json_file(bert_config_file)
         model = BertModel(bert_config)
+
         if use_cuda and torch.cuda.is_available():
             device = torch.device("cuda")
             map_location = "cuda"
@@ -134,7 +137,55 @@ class BertEmbedder(nn.Module):
             map_location = "cpu"
             device = torch.device("cpu")
 
-        model.load_state_dict(torch.load(init_checkpoint_pt, map_location=map_location))
+        state_dict = torch.load(init_checkpoint_pt, map_location)
+
+        # Load from a PyTorch state_dict
+        old_keys = []
+        new_keys = []
+        for key in state_dict.keys():
+            new_key = None
+            if 'gamma' in key:
+                new_key = key.replace('gamma', 'weight')
+            if 'beta' in key:
+                new_key = key.replace('beta', 'bias')
+            if new_key:
+                old_keys.append(key)
+                new_keys.append(new_key)
+        for old_key, new_key in zip(old_keys, new_keys):
+            state_dict[new_key] = state_dict.pop(old_key)
+
+        missing_keys = []
+        unexpected_keys = []
+        error_msgs = []
+        # copy state_dict so _load_from_state_dict can modify it
+        metadata = getattr(state_dict, '_metadata', None)
+        state_dict = state_dict.copy()
+        if metadata is not None:
+            state_dict._metadata = metadata
+
+        def load(module, prefix=''):
+            local_metadata = {} if metadata is None else metadata.get(prefix[:-1], {})
+            module._load_from_state_dict(
+                state_dict, prefix, local_metadata, True, missing_keys, unexpected_keys, error_msgs)
+            for name, child in module._modules.items():
+                if child is not None:
+                    load(child, prefix + name + '.')
+
+        start_prefix = ''
+        if not hasattr(model, 'bert') and any(s.startswith('bert.') for s in state_dict.keys()):
+            start_prefix = 'bert.'
+        load(model, prefix=start_prefix)
+
+        if len(missing_keys) > 0:
+            logger.info("Weights of {} not initialized from pretrained model: {}".format(
+                model.__class__.__name__, missing_keys))
+        if len(unexpected_keys) > 0:
+            logger.info("Weights from pretrained model not used in {}: {}".format(
+                model.__class__.__name__, unexpected_keys))
+        if len(error_msgs) > 0:
+            raise RuntimeError('Error(s) in loading state_dict for {}:\n\t{}'.format(
+                model.__class__.__name__, "\n\t".join(error_msgs)))
+
         model = model.to(device)
         model = cls(model=model, embedding_dim=embedding_dim, use_cuda=use_cuda, bert_mode=bert_mode,
                     bert_config_file=bert_config_file, init_checkpoint_pt=init_checkpoint_pt, freeze=freeze)
