@@ -3,9 +3,10 @@
 
 from . import trie
 from ..web.utils.logger import getLogger
+from ..modules.settings import UNKNOWN_TEXT_LABEL
 
 # 未知标签
-_UNKNOWN_LABEL = 'xx'
+_UNKNOWN_LABEL = UNKNOWN_TEXT_LABEL
 DELIMITER = '△' * 3
 
 

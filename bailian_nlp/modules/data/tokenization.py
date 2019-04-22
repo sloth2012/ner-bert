@@ -2,7 +2,7 @@
 from pytorch_pretrained_bert import tokenization
 import unicodedata
 import six
-from ..settings import UNKNOWN_CHAR
+from ..settings import UNKNOWN_TEXT_LABEL
 import re
 
 
@@ -46,7 +46,7 @@ class BailianTokenizer(object):
     def __init__(
             self,
             vocab_file=None,
-            unk_token=UNKNOWN_CHAR,
+            unk_token=UNKNOWN_TEXT_LABEL,
             do_lower_case=True,
             max_input_chars_per_word=200
     ):
