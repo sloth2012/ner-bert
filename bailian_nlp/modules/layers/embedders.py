@@ -96,6 +96,7 @@ class BertEmbedder(nn.Module):
         for param in self.model.parameters():
             param.requires_grad = True
 
+    # 冻结后面的层
     def freeze_to(self, to=-1):
         idx = 0
         if to < 0:
