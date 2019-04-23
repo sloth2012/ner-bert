@@ -1,11 +1,11 @@
-horovod
+#horovod
 torch
 tqdm
-tensorflow
+#tensorflow
 pandas
 numpy
 six
-gensim
+#gensim
 #git+https://github.com/HIT-SCIR/ELMoForManyLangs
 matplotlib
 pytorch_pretrained_bert

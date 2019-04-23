@@ -63,7 +63,7 @@ def segment_test(sample=False):
 
                 words = []
                 for word, _ in p.findall(line):
-                    from bailian_nlp.modules.data.tokenization import _is_control
+                    from pytorch_pretrained_bert.tokenization import _is_control
                     char_list = [
                         c for c in list(word)
                         if not (c in replace_chars or c.isspace() or _is_control(c))
@@ -107,4 +107,4 @@ def segment_test(sample=False):
 
 
 if __name__ == '__main__':
-    segment_test()
+    segment_test(sample=True)
