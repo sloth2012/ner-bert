@@ -251,6 +251,7 @@ class BailianTokenizer(object):
     # 用于恢复粗粒度的文本
     @staticmethod
     def recover_text_striped(text, tokens, labels, marker, default_label='w'):
+        # print(len(tokens), len(labels), len(marker))
         assert len(tokens) == len(labels) and len(marker) >= len(tokens)
 
         # 有效token指针

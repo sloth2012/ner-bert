@@ -291,7 +291,7 @@ def text_array_for_predict(input_text_arr: list, learner):
 
     pointer = 0
     results = []
-    for idx, (size, sen_marker) in enumerate(marker):
+    for idx, (size, sent_marker) in enumerate(marker):
         input_text = input_text_arr[idx]
         ed = pointer + size
 
@@ -309,8 +309,10 @@ def text_array_for_predict(input_text_arr: list, learner):
             if k != 0
         ]
 
-        pointer = ed
+        # for token, label in zip(tokens, labels):
+        #     print(token, label)
 
+        pointer = ed
         span_tokens, span_labels = tokenizer.recover_text_striped(
             input_text,
             tokens=tokens,
