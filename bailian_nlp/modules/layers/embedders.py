@@ -18,13 +18,14 @@ class BertEmbedder(nn.Module):
                 "freeze": self.is_freeze,
                 "embedding_dim": self.embedding_dim,
                 "use_cuda": self.use_cuda,
-                "bert_mode": self.bert_mode
+                "bert_mode": self.bert_mode,
+                "layers_num": self.layers_num
             }
         }
         return config
 
     def __init__(self, model, bert_config_file, init_checkpoint_pt,
-                 freeze=True, embedding_dim=768, use_cuda=True, bert_mode="weighted", ):
+                 freeze=True, embedding_dim=768, use_cuda=True, bert_mode="weighted", layers_num=6):
         super().__init__()
         self.bert_config_file = bert_config_file
         self.init_checkpoint_pt = init_checkpoint_pt
@@ -33,8 +34,10 @@ class BertEmbedder(nn.Module):
         self.model = model
         self.use_cuda = use_cuda and torch.cuda.is_available()
         self.bert_mode = bert_mode
+        # 使用bert的层数
+        self.layers_num = layers_num
         if self.bert_mode == "weighted":
-            self.bert_weights = nn.Parameter(torch.FloatTensor(12, 1))
+            self.bert_weights = nn.Parameter(torch.FloatTensor(layers_num, 1))
             self.bert_gamma = nn.Parameter(torch.FloatTensor(1, 1))
 
         if use_cuda and torch.cuda.is_available():
@@ -55,14 +58,16 @@ class BertEmbedder(nn.Module):
             embedding_dim=768,
             use_cuda=True,
             bert_mode="weighted",
-            freeze=True
+            freeze=True,
+            layers_num=6,
     ):
         from pytorch_pretrained_bert import BertConfig, BertModel
         bert_config = BertConfig.from_json_file(bert_config_file)
         model = BertModel(bert_config)
 
         model = cls(model=model, embedding_dim=embedding_dim, use_cuda=use_cuda, bert_mode=bert_mode,
-                    bert_config_file=bert_config_file, init_checkpoint_pt=init_checkpoint_pt, freeze=freeze)
+                    bert_config_file=bert_config_file, init_checkpoint_pt=init_checkpoint_pt, freeze=freeze,
+                    layers_num=layers_num)
 
         if freeze:
             model.freeze()
@@ -80,7 +85,7 @@ class BertEmbedder(nn.Module):
         if self.bert_mode == "last":
             return all_encoder_layers[-1]
         elif self.bert_mode == "weighted":
-            all_encoder_layers = torch.stack([a * b for a, b in zip(all_encoder_layers, self.bert_weights)])
+            all_encoder_layers = torch.stack([a * b for a, b in zip(all_encoder_layers[:self.layers_num], self.bert_weights)])
             return self.bert_gamma * torch.sum(all_encoder_layers, dim=0)
 
     def freeze(self):
@@ -121,7 +126,8 @@ class BertEmbedder(nn.Module):
                embedding_dim=768,
                use_cuda=True,
                bert_mode="weighted",
-               freeze=True
+               freeze=True,
+               layers_num=6
                ):
 
         logging.info('Loading pretrained bert model!')
@@ -188,7 +194,8 @@ class BertEmbedder(nn.Module):
 
         model = model.to(device)
         model = cls(model=model, embedding_dim=embedding_dim, use_cuda=use_cuda, bert_mode=bert_mode,
-                    bert_config_file=bert_config_file, init_checkpoint_pt=init_checkpoint_pt, freeze=freeze)
+                    bert_config_file=bert_config_file, init_checkpoint_pt=init_checkpoint_pt, freeze=freeze,
+                    layers_num=layers_num)
         if freeze:
             model.freeze()
         return model
