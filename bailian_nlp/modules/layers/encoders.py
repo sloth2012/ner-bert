@@ -37,7 +37,7 @@ class BertBiLSTMEncoder(nn.Module):
     @classmethod
     def from_config(cls, config):
         if config["embeddings"]["name"] == "BertEmbedder":
-            embeddings = BertEmbedder.create(**config["embeddings"]["params"])
+            embeddings = BertEmbedder.from_config(**config["embeddings"]["params"])
         else:
             raise NotImplemented("form_config is implemented only for BertEmbedder now :(")
         return cls.create(embeddings, config["hidden_dim"], config["rnn_layers"], config["use_cuda"])
