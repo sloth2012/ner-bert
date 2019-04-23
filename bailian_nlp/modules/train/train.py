@@ -91,23 +91,24 @@ def predict(dl, model, id2label):
     model.eval()
     idx = 0
     preds_cpu = []
-    for batch, sorted_idx in tqdm(dl, total=len(dl)):
-        idx += 1
-        labels_mask, labels_ids = batch[-2:]
+    with torch.no_grad():
+        for batch, sorted_idx in tqdm(dl, total=len(dl)):
+            idx += 1
+            labels_mask, labels_ids = batch[-2:]
 
-        preds = model.forward(batch)
+            preds = model.forward(batch)
 
-        bs = batch[0].shape[0]
-        unsorted_mask = [0] * bs
-        unsorted_pred = [0] * bs
+            bs = batch[0].shape[0]
+            unsorted_mask = [0] * bs
+            unsorted_pred = [0] * bs
 
-        for idx, sidx in enumerate(sorted_idx):
-            unsorted_pred[sidx] = preds[idx]
-            unsorted_mask[sidx] = labels_mask[idx]
+            for idx, sidx in enumerate(sorted_idx):
+                unsorted_pred[sidx] = preds[idx]
+                unsorted_mask[sidx] = labels_mask[idx]
 
-        preds_cpu_ = transformed_result([unsorted_pred], [unsorted_mask], id2label)
+            preds_cpu_ = transformed_result([unsorted_pred], [unsorted_mask], id2label)
 
-        preds_cpu.extend(preds_cpu_)
+            preds_cpu.extend(preds_cpu_)
 
     return preds_cpu
 
