@@ -243,6 +243,8 @@ class BailianTokenizer(object):
                     token += char
 
         if token != '':
+            if self.do_lower_case:
+                token = token.lower()
             sub_split_tokens = self.basic_tokenize(token, marker, index=last_idx)
             split_tokens.extend(sub_split_tokens)
 
