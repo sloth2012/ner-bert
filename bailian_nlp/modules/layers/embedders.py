@@ -43,7 +43,7 @@ class BertEmbedder(nn.Module):
         self.init_weights()
 
     @classmethod
-    def from_config(cls, config):
+    def from_config(cls, **config):
         return cls.recover(**config)
 
     # 恢复模型时，pretrain的会自动恢复，不用在初始化加载
