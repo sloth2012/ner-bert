@@ -182,12 +182,12 @@ class BailianTokenizer(object):
 
         last_idx = 0
 
-        # 针对不能处理中文引号的问题，这里替换成英文符号
+        # 针对不能处理中文引号的问题，这里替换成英文符号。采用ernie时无需设置
         replace_chars_mapping = {
-            '“': '"',
-            '”': '"',
-            '‘': '\'',
-            '’': '\''
+            # '“': '"',
+            # '”': '"',
+            # '‘': '\'',
+            # '’': '\''
         }
 
         for idx, char in enumerate(text):
