@@ -277,12 +277,21 @@ class BailianTokenizer(object):
                     strip_offset = 0
 
                 temp_offset = strip_offset
-                current_prefix, current_label = labels[pointer].split('_')
 
-                if (current_label == cache_label and current_prefix in ['I', 'E']) or cache_label is None:
-                    do_append = True
-                else:
+                label = labels[pointer]
+
+                if label == "[CLS]" or label == "<bos>":
                     do_append = False
+                    current_label = UNKNOWN_TEXT_LABEL
+                else:
+                    current_prefix, current_label = labels[pointer].split('_')
+
+                    if (current_label == cache_label and current_prefix in ['I', 'E']) or cache_label is None:
+                        do_append = True
+                    else:
+                        do_append = False
+
+                if not do_append:
                     # 说明为新的开始，这时应该将已有的处理下
                     span_tokens.append(''.join(cache_tokens))
                     span_labels.append(cache_label)

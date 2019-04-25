@@ -233,7 +233,7 @@ class NerLearner(object):
             logging.info("on epoch {} by max_{}: {}".format(idx, target_metric, metric))
             print(self.history[-1])
         # Store best model
-        if self.best_target_metric < metric:
+        if self.best_target_metric <= metric:
             self.best_target_metric = metric
             if self.verbose:
                 logging.info("Saving new best model...")
