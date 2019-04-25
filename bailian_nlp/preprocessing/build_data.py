@@ -127,7 +127,7 @@ def build_pos_fake_data():
             f.write('\n')
 
 
-def build_pos_train_and_valid_data():
+def build_pos_train_and_valid_data(vocab_file=None):
     '''
     构造词性标注模型的训练和验证数据，根据百度分词结果（自定义词库）和上面的fake数据来组织进行。
     :return:
@@ -160,7 +160,7 @@ def build_pos_train_and_valid_data():
         fins = [fin1, fin2, fin3, fin4]
 
         from bailian_nlp.modules.data.tokenization import BailianTokenizer
-        tokenizer = BailianTokenizer()
+        tokenizer = BailianTokenizer(vocab_file=vocab_file)
 
         total_counter = 0
         error_counter = 0
