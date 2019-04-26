@@ -7,6 +7,7 @@ import torch.nn as nn
 from pytorch_pretrained_bert.modeling import BertLayer, BertEmbeddings, BertLayerNorm
 import copy
 import logging
+import re
 
 
 class SubBertModel(nn.Module):
@@ -80,11 +81,32 @@ class SubBertModel(nn.Module):
     ):
         state_dict = pretrained_state_dict
 
+        unused_key_p = re.compile('encoder\.layer\.(\d{1,2}).')
         # Load from a PyTorch state_dict
         old_keys = []
         new_keys = []
+
+        del_keys = []
         for key in state_dict.keys():
+            do_pop = False
             new_key = None
+
+            if 'pooler' in key:
+                del_keys.append(key)
+                do_pop = True
+
+            m = unused_key_p.findall(key)
+            for num in m:
+                if int(num) >= self.num_hidden_layers:
+                    del_keys.append(key)
+                    do_pop = True
+                else:
+                    # 删除encoder属性
+                    new_key = key.replace('encoder.', '')
+
+            if do_pop:
+                continue
+
             if 'gamma' in key:
                 new_key = key.replace('gamma', 'weight')
             if 'beta' in key:
@@ -92,6 +114,10 @@ class SubBertModel(nn.Module):
             if new_key:
                 old_keys.append(key)
                 new_keys.append(new_key)
+
+        for key in del_keys:
+            state_dict.pop(key)
+
         for old_key, new_key in zip(old_keys, new_keys):
             state_dict[new_key] = state_dict.pop(old_key)
 
@@ -106,6 +132,7 @@ class SubBertModel(nn.Module):
 
         def load(module, prefix=''):
             local_metadata = {} if metadata is None else metadata.get(prefix[:-1], {})
+            #         print(prefix, local_metadata)
             module._load_from_state_dict(
                 state_dict, prefix, local_metadata, True, missing_keys, unexpected_keys, error_msgs)
             for name, child in module._modules.items():
@@ -126,5 +153,6 @@ class SubBertModel(nn.Module):
         if len(error_msgs) > 0:
             raise RuntimeError('Error(s) in loading state_dict for {}:\n\t{}'.format(
                 self.__class__.__name__, "\n\t".join(error_msgs)))
+
 
 

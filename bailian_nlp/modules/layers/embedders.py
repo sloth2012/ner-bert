@@ -94,7 +94,7 @@ class BertEmbedder(nn.Module):
     # @timer
     def forward(self, *batch):
         input_ids, input_mask, input_type_ids = batch[:3]
-        all_encoder_layers, _ = self.model(input_ids, token_type_ids=input_type_ids, attention_mask=input_mask)
+        all_encoder_layers = self.model(input_ids, token_type_ids=input_type_ids, attention_mask=input_mask)
         if self.bert_mode == "last":
             return all_encoder_layers[-1]
         elif self.bert_mode == "weighted":
