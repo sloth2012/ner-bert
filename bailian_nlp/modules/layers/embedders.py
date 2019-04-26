@@ -7,6 +7,8 @@ from torch import nn
 import logging
 from ...web.utils.common import timer
 
+default_bert_layers_num = 1
+
 
 class BertEmbedder(nn.Module):
     # @property
@@ -14,22 +16,26 @@ class BertEmbedder(nn.Module):
         config = {
             "name": "BertEmbedder",
             "params": {
-                "bert_config_file": self.bert_config_file,
-                "init_checkpoint_pt": self.init_checkpoint_pt,
                 "freeze": self.is_freeze,
                 "embedding_dim": self.embedding_dim,
                 "use_cuda": self.use_cuda,
                 "bert_mode": self.bert_mode,
-                "layers_num": self.layers_num
+                "layers_num": self.layers_num,
+                "bert_config_file": self.model.bert_config.to_dict()
             }
         }
         return config
 
-    def __init__(self, model, bert_config_file, init_checkpoint_pt,
-                 freeze=True, embedding_dim=768, use_cuda=True, bert_mode="weighted", layers_num=12):
+    def __init__(
+            self,
+            model,
+            freeze=True,
+            embedding_dim=768,
+            use_cuda=True,
+            bert_mode="weighted",
+            layers_num=default_bert_layers_num
+    ):
         super().__init__()
-        self.bert_config_file = bert_config_file
-        self.init_checkpoint_pt = init_checkpoint_pt
         self.is_freeze = freeze
         self.embedding_dim = embedding_dim
         self.model = model
@@ -55,20 +61,25 @@ class BertEmbedder(nn.Module):
     def recover(
             cls,
             bert_config_file,
-            init_checkpoint_pt,
             embedding_dim=768,
             use_cuda=True,
             bert_mode="weighted",
             freeze=True,
-            layers_num=12,
+            layers_num=default_bert_layers_num,
     ):
-        from pytorch_pretrained_bert import BertConfig, BertModel
+        from pytorch_pretrained_bert import BertConfig
+        from ..models.bert_crop import SubBertModel
         bert_config = BertConfig.from_json_file(bert_config_file)
-        model = BertModel(bert_config)
+        model = SubBertModel(bert_config, num_hidden_layers=layers_num)
 
-        model = cls(model=model, embedding_dim=embedding_dim, use_cuda=use_cuda, bert_mode=bert_mode,
-                    bert_config_file=bert_config_file, init_checkpoint_pt=init_checkpoint_pt, freeze=freeze,
-                    layers_num=layers_num)
+        model = cls(
+            model=model,
+            embedding_dim=embedding_dim,
+            use_cuda=use_cuda,
+            bert_mode=bert_mode,
+            freeze=freeze,
+            layers_num=layers_num
+        )
 
         if freeze:
             model.freeze()
@@ -87,7 +98,8 @@ class BertEmbedder(nn.Module):
         if self.bert_mode == "last":
             return all_encoder_layers[-1]
         elif self.bert_mode == "weighted":
-            all_encoder_layers = torch.stack([a * b for a, b in zip(all_encoder_layers[:self.layers_num], self.bert_weights)])
+            all_encoder_layers = torch.stack(
+                [a * b for a, b in zip(all_encoder_layers[:self.layers_num], self.bert_weights)])
             return self.bert_gamma * torch.sum(all_encoder_layers, dim=0)
 
     def freeze(self):
@@ -130,14 +142,15 @@ class BertEmbedder(nn.Module):
                use_cuda=True,
                bert_mode="weighted",
                freeze=True,
-               layers_num=12
+               layers_num=default_bert_layers_num
                ):
 
         logging.info('Loading pretrained bert model!')
-        from pytorch_pretrained_bert import BertConfig, BertModel
+        from pytorch_pretrained_bert import BertConfig
+        from ..models.bert_crop import SubBertModel
         bert_config = BertConfig.from_json_file(bert_config_file)
         logging.info("Model config {}".format(bert_config))
-        model = BertModel(bert_config)
+        model = SubBertModel(bert_config, layers_num)
 
         if use_cuda and torch.cuda.is_available():
             device = torch.device("cuda")
@@ -147,58 +160,17 @@ class BertEmbedder(nn.Module):
             device = torch.device("cpu")
 
         state_dict = torch.load(init_checkpoint_pt, map_location)
-
-        # Load from a PyTorch state_dict
-        old_keys = []
-        new_keys = []
-        for key in state_dict.keys():
-            new_key = None
-            if 'gamma' in key:
-                new_key = key.replace('gamma', 'weight')
-            if 'beta' in key:
-                new_key = key.replace('beta', 'bias')
-            if new_key:
-                old_keys.append(key)
-                new_keys.append(new_key)
-        for old_key, new_key in zip(old_keys, new_keys):
-            state_dict[new_key] = state_dict.pop(old_key)
-
-        missing_keys = []
-        unexpected_keys = []
-        error_msgs = []
-        # copy state_dict so _load_from_state_dict can modify it
-        metadata = getattr(state_dict, '_metadata', None)
-        state_dict = state_dict.copy()
-        if metadata is not None:
-            state_dict._metadata = metadata
-
-        def load(module, prefix=''):
-            local_metadata = {} if metadata is None else metadata.get(prefix[:-1], {})
-            module._load_from_state_dict(
-                state_dict, prefix, local_metadata, True, missing_keys, unexpected_keys, error_msgs)
-            for name, child in module._modules.items():
-                if child is not None:
-                    load(child, prefix + name + '.')
-
-        start_prefix = ''
-        if not hasattr(model, 'bert') and any(s.startswith('bert.') for s in state_dict.keys()):
-            start_prefix = 'bert.'
-        load(model, prefix=start_prefix)
-
-        if len(missing_keys) > 0:
-            logging.info("Weights of {} not initialized from pretrained model: {}".format(
-                model.__class__.__name__, missing_keys))
-        if len(unexpected_keys) > 0:
-            logging.info("Weights from pretrained model not used in {}: {}".format(
-                model.__class__.__name__, unexpected_keys))
-        if len(error_msgs) > 0:
-            raise RuntimeError('Error(s) in loading state_dict for {}:\n\t{}'.format(
-                model.__class__.__name__, "\n\t".join(error_msgs)))
+        model.init_from_pretrained(state_dict)
 
         model = model.to(device)
-        model = cls(model=model, embedding_dim=embedding_dim, use_cuda=use_cuda, bert_mode=bert_mode,
-                    bert_config_file=bert_config_file, init_checkpoint_pt=init_checkpoint_pt, freeze=freeze,
-                    layers_num=layers_num)
+        model = cls(
+            model=model,
+            embedding_dim=embedding_dim,
+            use_cuda=use_cuda,
+            bert_mode=bert_mode,
+            freeze=freeze,
+            layers_num=layers_num
+        )
         if freeze:
             model.freeze()
         return model
