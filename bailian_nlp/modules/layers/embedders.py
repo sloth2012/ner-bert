@@ -5,6 +5,7 @@ import codecs
 import json
 from torch import nn
 import logging
+from ...web.utils.common import timer
 
 
 class BertEmbedder(nn.Module):
@@ -25,7 +26,7 @@ class BertEmbedder(nn.Module):
         return config
 
     def __init__(self, model, bert_config_file, init_checkpoint_pt,
-                 freeze=True, embedding_dim=768, use_cuda=True, bert_mode="weighted", layers_num=6):
+                 freeze=True, embedding_dim=768, use_cuda=True, bert_mode="weighted", layers_num=12):
         super().__init__()
         self.bert_config_file = bert_config_file
         self.init_checkpoint_pt = init_checkpoint_pt
@@ -59,7 +60,7 @@ class BertEmbedder(nn.Module):
             use_cuda=True,
             bert_mode="weighted",
             freeze=True,
-            layers_num=6,
+            layers_num=12,
     ):
         from pytorch_pretrained_bert import BertConfig, BertModel
         bert_config = BertConfig.from_json_file(bert_config_file)
@@ -79,6 +80,7 @@ class BertEmbedder(nn.Module):
             nn.init.xavier_normal_(self.bert_gamma)
             nn.init.xavier_normal_(self.bert_weights)
 
+    # @timer
     def forward(self, *batch):
         input_ids, input_mask, input_type_ids = batch[:3]
         all_encoder_layers, _ = self.model(input_ids, token_type_ids=input_type_ids, attention_mask=input_mask)
@@ -128,7 +130,7 @@ class BertEmbedder(nn.Module):
                use_cuda=True,
                bert_mode="weighted",
                freeze=True,
-               layers_num=6
+               layers_num=12
                ):
 
         logging.info('Loading pretrained bert model!')
