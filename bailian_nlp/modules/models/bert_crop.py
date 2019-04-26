@@ -22,7 +22,7 @@ class SubBertModel(nn.Module):
         num_hidden_layers = config.num_hidden_layers if num_hidden_layers is None else num_hidden_layers
         layer = BertLayer(config)
         self.layer = nn.ModuleList([copy.deepcopy(layer) for _ in range(num_hidden_layers)])
-        self.bert_config = config
+        self.config = config
         self.num_hidden_layers = num_hidden_layers
         self.apply(self.init_bert_weights)
 

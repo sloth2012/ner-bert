@@ -21,7 +21,7 @@ class BertEmbedder(nn.Module):
                 "use_cuda": self.use_cuda,
                 "bert_mode": self.bert_mode,
                 "layers_num": self.layers_num,
-                "bert_config_file": self.model.bert_config.to_dict()
+                "bert_config_file": self.model.config.to_dict()
             }
         }
         return config
