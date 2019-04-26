@@ -14,10 +14,10 @@ class SubBertModel(nn.Module):
     def __init__(
             self,
             config,
-            num_hidden_layers=None
+            num_hidden_layers=None,
 
     ):
-        super().__init__(config, num_hidden_layers)
+        super().__init__()
         self.embeddings = BertEmbeddings(config)
         num_hidden_layers = config.num_hidden_layers if num_hidden_layers is None else num_hidden_layers
         layer = BertLayer(config)
