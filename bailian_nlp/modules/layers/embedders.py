@@ -21,7 +21,7 @@ class BertEmbedder(nn.Module):
                 "use_cuda": self.use_cuda,
                 "bert_mode": self.bert_mode,
                 "layers_num": self.layers_num,
-                "bert_config_file": self.model.config.to_dict()
+                "bert_config": self.model.config.to_dict()
             }
         }
         return config
@@ -60,7 +60,7 @@ class BertEmbedder(nn.Module):
     @classmethod
     def recover(
             cls,
-            bert_config_file,
+            bert_config,
             embedding_dim=768,
             use_cuda=True,
             bert_mode="weighted",
@@ -69,7 +69,7 @@ class BertEmbedder(nn.Module):
     ):
         from pytorch_pretrained_bert import BertConfig
         from ..models.bert_crop import SubBertModel
-        bert_config = BertConfig.from_json_file(bert_config_file)
+        bert_config = BertConfig.from_dict(bert_config)
         model = SubBertModel(bert_config, num_hidden_layers=layers_num)
 
         model = cls(
