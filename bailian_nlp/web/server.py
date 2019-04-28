@@ -6,6 +6,7 @@ import tornado.httpserver
 import tornado.ioloop
 import urllib3
 from tornado.options import options, define
+import tornado.process
 
 define("port", default=50010, help="run on th given port", type=int)
 
@@ -25,7 +26,8 @@ def main():
 
     [i.setFormatter(LogFormatter()) for i in logging.getLogger().handlers]
     http_server = tornado.httpserver.HTTPServer(application)
-    http_server.listen(options.port)
+    http_server.bind(options.port)
+    http_server.start(num_processes=0)
 
     logger.info('Development server is running at http://127.0.0.1:%s/' % options.port)
     logger.info('Quit the server with Control-C')
