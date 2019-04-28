@@ -7,9 +7,7 @@ import tornado.ioloop
 import urllib3
 from tornado.options import options, define
 import tornado.process
-import torch.multiprocessing as mp
 
-mp.set_start_method('spawn')
 define("port", default=50010, help="run on th given port", type=int)
 
 
@@ -50,4 +48,7 @@ if __name__ == "__main__":
 
     urllib3.disable_warnings()
 
+    import torch.multiprocessing as mp
+
+    mp.set_start_method('spawn')
     main()
