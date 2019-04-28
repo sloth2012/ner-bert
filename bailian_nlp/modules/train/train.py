@@ -257,3 +257,4 @@ class NerLearner(object):
             device = torch.device("cpu")
         self.model.load_state_dict(torch.load(path, map_location=map_location))
         self.model = self.model.to(device)
+        self.model.share_memory()
