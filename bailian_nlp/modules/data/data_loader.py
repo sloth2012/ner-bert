@@ -99,12 +99,6 @@ class DataLoaderForPredict(DataLoader):
         self.cuda = cuda and torch.cuda.is_available()
 
     def collate_fn(self, data):
-        import torch
-        import time
-        import torch.multiprocessing as mp
-        torch.manual_seed(int(time.time()))
-        mp.set_start_method('spawn', force=True)
-
         res = []
         token_ml = max(map(lambda x_: sum(x_.data[1]), data))
         label_ml = max(map(lambda x_: sum(x_.data[-2]), data))
