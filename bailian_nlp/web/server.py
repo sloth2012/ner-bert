@@ -7,18 +7,12 @@ import tornado.ioloop
 import urllib3
 from tornado.options import options, define
 import tornado.process
-import time
-import torch
-import torch.multiprocessing as mp
 
 define("port", default=50010, help="run on th given port", type=int)
 
 
-torch.manual_seed(int(time.time()))
-mp.set_start_method('spawn', force=True)
-
-
 def main():
+
     from bailian_nlp.web.utils.logger import getLogger, LogFormatter
     from bailian_nlp.web.application import application
     logger = getLogger('server')
@@ -53,5 +47,11 @@ if __name__ == "__main__":
     sys.path.insert(0, rootPath)
 
     urllib3.disable_warnings()
+
+    import torch
+    import time
+    import torch.multiprocessing as mp
+    torch.manual_seed(int(time.time()))
+    mp.set_start_method('spawn', force=True)
 
     main()
