@@ -27,8 +27,9 @@ def main():
 
     [i.setFormatter(LogFormatter()) for i in logging.getLogger().handlers]
     http_server = tornado.httpserver.HTTPServer(application)
+
     http_server.bind(options.port)
-    http_server.start(num_processes=2)
+    http_server.start(num_processes=1)
 
     logger.info('Development server is running at http://127.0.0.1:%s/' % options.port)
     logger.info('Quit the server with Control-C')

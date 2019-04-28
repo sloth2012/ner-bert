@@ -288,7 +288,6 @@ def text_array_for_predict(input_text_arr: list, learner):
         batch_size=learner.data.batch_size,
         shuffle=False,
         cuda=cuda,
-        num_workers=1
     )
 
     preds = learner.predict(dl)
