@@ -7,14 +7,14 @@ import tornado.ioloop
 import urllib3
 from tornado.options import options, define
 import tornado.process
+import torch.multiprocessing as mp
 
-
+mp.set_start_method('spawn')
 define("port", default=50010, help="run on th given port", type=int)
 
 
 def main():
-    import torch.multiprocessing as mp
-    mp.set_start_method('spawn')
+
     from bailian_nlp.web.utils.logger import getLogger, LogFormatter
     from bailian_nlp.web.application import application
     logger = getLogger('server')
