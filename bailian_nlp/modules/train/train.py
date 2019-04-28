@@ -5,6 +5,8 @@ import torch
 from ..utils.plot_metrics import get_mean_max_metric
 import json
 from .optimization import BertAdam
+from ...web.utils.common import timer
+
 
 logging.basicConfig(level=logging.INFO)
 amp_handle = None
@@ -87,6 +89,7 @@ def validate_step(dl, model, id2label, sup_labels):
     return clf_report
 
 
+@timer
 def predict(dl, model, id2label):
     model.eval()
     idx = 0
