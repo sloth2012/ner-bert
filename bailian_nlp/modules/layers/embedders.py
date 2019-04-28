@@ -7,7 +7,7 @@ from torch import nn
 import logging
 from ...web.utils.common import timer
 
-default_bert_layers_num = 1
+default_bert_layers_num = 3
 
 
 class BertEmbedder(nn.Module):
