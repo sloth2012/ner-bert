@@ -91,7 +91,7 @@ class BertEmbedder(nn.Module):
             nn.init.xavier_normal_(self.bert_gamma)
             nn.init.xavier_normal_(self.bert_weights)
 
-    @timer
+    #@timer
     def forward(self, *batch):
         input_ids, input_mask, input_type_ids = batch[:3]
         all_encoder_layers = self.model(input_ids, token_type_ids=input_type_ids, attention_mask=input_mask)
