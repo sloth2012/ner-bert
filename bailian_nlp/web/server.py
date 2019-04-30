@@ -8,7 +8,8 @@ import urllib3
 from tornado.options import options, define
 import tornado.process
 
-define("port", default=50010, help="run on th given port", type=int)
+define("port", default=50001, help="run on th given port", type=int)
+define("workers", default=1, help="worker num", type=int)
 
 
 def main():
@@ -33,7 +34,7 @@ def main():
     global_var.pos_tagger = PosTagger()
 
     http_server.bind(options.port)
-    http_server.start(num_processes=2)
+    http_server.start(num_processes=options.workers)
 
     logger.info('Development server is running at http://127.0.0.1:%s/' % options.port)
     logger.info('Quit the server with Control-C')

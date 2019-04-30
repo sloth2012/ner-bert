@@ -1,5 +1,4 @@
 import torch
-from gensim.models import KeyedVectors
 import os
 import codecs
 import json
@@ -7,7 +6,7 @@ from torch import nn
 import logging
 from ...web.utils.common import timer
 
-default_bert_layers_num = 3
+default_bert_layers_num = 1
 
 
 class BertEmbedder(nn.Module):
@@ -213,6 +212,7 @@ class Word2VecEmbedder(nn.Module):
 
     def load_gensim_word2vec(self, path, words, binary=False):
         self.loaded = True
+        from gensim.models import KeyedVectors
         word_vectors = KeyedVectors.load_word2vec_format(path, binary=binary)
         for word, idx in words.items():
             if word in word_vectors:

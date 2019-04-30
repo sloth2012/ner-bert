@@ -1,11 +1,12 @@
 import numpy as np
 from collections import defaultdict
-from matplotlib import pyplot as plt
+
 from .utils import tokens2spans, bert_labels2tokens
 from sklearn_crfsuite.metrics import flat_classification_report
 
 
 def plot_by_class_curve(history, metric_, sup_labels):
+    from matplotlib import pyplot as plt
     by_class = get_by_class_metric(history, metric_, sup_labels)
     vals = list(by_class.values())
     x = np.arange(len(vals[0]))

@@ -16,9 +16,9 @@ setup(
     ),
     package_data={
         'bailian_nlp': [
-            # 'datadrive/models/chinese_L-12_H-768_A-12/pos.bin',
-            'datadrive/models/chinese_L-12_H-768_A-12/*.json',
-            'datadrive/models/chinese_L-12_H-768_A-12/*.txt'
+            'datadrive/models/ernie/pos.bin',
+            'datadrive/models/ernie/*.json',
+            'datadrive/models/ernie/*.txt'
         ],
     }
 )
