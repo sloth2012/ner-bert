@@ -2,9 +2,7 @@ FROM frolvlad/alpine-miniconda3:python3.6 as builder
 
 WORKDIR /pos-bert
 
-ENV WORKER_NUM=1
 ENV LIBRARY_PATH=/lib:/usr/lib
-ENV PYTHONPATH=/pos-bert
 
 COPY pkgs pkgs
 COPY bailian_nlp bailian_nlp
