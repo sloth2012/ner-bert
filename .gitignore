@@ -121,3 +121,4 @@ bailian_nlp/datadrive
 nohup.out
 packages
 pkgs
+/docker/pos-bert.tar.gz

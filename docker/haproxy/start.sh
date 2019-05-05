@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-docker run -d -it --name haproxy -v /root/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro haproxy
+docker run -d --name haproxy -v /Users/lx/PycharmProjects/pos-bert/docker/haproxy:/usr/local/etc/haproxy:ro haproxy
