@@ -122,3 +122,4 @@ nohup.out
 packages
 pkgs
 /docker/pos-bert.tar.gz
+/docker/ner-bert.tar.gz
