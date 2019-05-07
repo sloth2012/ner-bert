@@ -1,4 +1,5 @@
 FROM frolvlad/alpine-miniconda3:python3.6 as builder
+ENV LANG=C.UTF-8
 
 WORKDIR /pos-bert
 
@@ -20,9 +21,14 @@ RUN apk add --no-cache gcc \
 
 FROM scratch
 LABEL maintainer="lx<liuxiang@bailian.ai>"
+ENV LANG=C.UTF-8
 
 COPY --from=builder / /
 WORKDIR /pos-bert
+
+RUN apk add tzdata \
+    && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && echo "Asia/Shanghai" > /etc/timezone
 
 ENV WORKER_NUM=1
 ENV LIBRARY_PATH=/lib:/usr/lib

@@ -32,7 +32,7 @@ class Dictionary():
         words = []
 
         counter = 0
-        with open(path) as f:
+        with open(path, encoding='utf-8') as f:
             for i, line in enumerate(f):
                 line = line.strip()
                 if not line:

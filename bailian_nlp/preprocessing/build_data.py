@@ -98,14 +98,25 @@ def build_pos_fake_data():
             if score <= 0.3:
                 # 同词性相同词多次重复
                 key = random.choice(list(materials.keys()))
-                text = ' '.join(random.randint(1, 4) * [random.choice(materials[key]) + '/' + key])
+
+                word = random.choice(materials[key])
+                if word == '[UNK]':
+                    continue
+
+                text = ' '.join(random.randint(1, 4) * [word + '/' + key])
 
             elif score <= 0.6:
                 # 同词性不同词多次重复
                 key = random.choice(list(materials.keys()))
-                text = ' '.join([
-                    random.choice(materials[key]) + '/' + key
+                words = [
+                    random.choice(materials[key])
                     for _ in range(random.randint(1, 4))
+                ]
+
+                text = ' '.join([
+                    word + '/' + key
+                    for word in words
+                    if word != '[UNK]'
                 ])
             elif score <= 0.9:
                 # 不同词性词组合
@@ -113,15 +124,28 @@ def build_pos_fake_data():
 
                 for _ in range(random.randint(1, 6)):
                     key = random.choice(list(materials.keys()))
+                    word = random.choice(materials[key])
+                    if word == '[UNK]':
+                        continue
                     words.append(
-                        random.choice(materials[key]) + '/' + key
+                        word + '/' + key
                     )
+
+                if len(words) == 0:
+                    continue
 
                 text = ' '.join(words)
             else:
                 # 直接输出
                 key = random.choice(list(materials.keys()))
-                text = random.choice(materials[key]) + '/' + key
+                word = random.choice(materials[key])
+                if word == '[UNK]':
+                    continue
+
+                text = word + '/' + key
+
+            if text == '':
+                continue
 
             f.write(text)
             f.write('\n')

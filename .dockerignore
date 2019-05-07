@@ -32,3 +32,4 @@ packages
 !bailian_nlp/datadrive/models/ernie/vocab.txt
 docker
 !/bailian_nlp/datadrive/dict/user_dict.txt
+.DS_Store
