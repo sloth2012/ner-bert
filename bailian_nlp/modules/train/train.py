@@ -89,13 +89,16 @@ def validate_step(dl, model, id2label, sup_labels):
     return clf_report
 
 
-@timer
-def predict(dl, model, id2label):
+# @timer
+def predict(dl, model, id2label, verbose=True):
     model.eval()
     idx = 0
     preds_cpu = []
     with torch.no_grad():
-        for batch, sorted_idx in tqdm(dl, total=len(dl)):
+        loop = dl
+        if verbose:
+            loop = tqdm(loop, total=len(dl))
+        for batch, sorted_idx in loop:
             idx += 1
             labels_mask, labels_ids = batch[-2:]
 
@@ -236,14 +239,14 @@ class NerLearner(object):
             logging.info("on epoch {} by max_{}: {}".format(idx, target_metric, metric))
             print(self.history[-1])
         # Store best model
-        if self.best_target_metric <= metric:
+        if self.best_target_metric < metric:
             self.best_target_metric = metric
             if self.verbose:
                 logging.info("Saving new best model...")
             self.save_model()
 
-    def predict(self, dl):
-        return predict(dl, self.model, self.data.id2label)
+    def predict(self, dl, verbose=True):
+        return predict(dl, self.model, self.data.id2label, verbose=verbose)
 
     def save_model(self, path=None):
         path = path if path else self.best_model_path

@@ -21,10 +21,14 @@ build
 *.egg-info
 venv
 examples
-bailian_nlp
+bailian_nlp/datadrive
 README.md
 LICENSE
 setup.py
 .gitignore
 *.bak
-#packages
+packages
+!bailian_nlp/datadrive/models/ernie/pos.*
+!bailian_nlp/datadrive/models/ernie/vocab.txt
+docker
+!/bailian_nlp/datadrive/dict/user_dict.txt

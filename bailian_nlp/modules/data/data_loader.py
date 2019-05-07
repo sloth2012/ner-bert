@@ -123,20 +123,26 @@ class DataLoaderForPredict(DataLoader):
         return res_, sorted_idx
 
 
-@timer
+# @timer
 def get_data(
         df,
         tokenizer,
         label2idx=None,
         max_seq_len=424,
         pad="<pad>",
+        verbose=True
 ):
     if label2idx is None:
         label2idx = {pad: 0, '[CLS]': 1}
     features = []
     all_args = [df["0"].tolist(), df["1"].tolist()]
     total = len(df)
-    for args in tqdm(enumerate(zip(*all_args)), total=total, desc="bert data"):
+
+    loop = enumerate(zip(*all_args))
+    if verbose:
+        loop = tqdm(loop, total=total, desc="bert data")
+
+    for args in loop:
         try:
             idx, (text_label, text) = args
 
@@ -279,7 +285,7 @@ def text_array_for_predict(input_text_arr: list, learner):
         tokenizer=learner.data.tokenizer,
         label2idx=learner.data.label2idx,
         max_seq_len=learner.data.max_seq_len,
-
+        verbose=False
     )
 
     cuda = learner.model.use_cuda
@@ -290,7 +296,7 @@ def text_array_for_predict(input_text_arr: list, learner):
         cuda=cuda,
     )
 
-    preds = learner.predict(dl)
+    preds = learner.predict(dl, verbose=False)
 
     pointer = 0
     results = []
