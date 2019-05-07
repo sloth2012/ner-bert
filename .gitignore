@@ -124,3 +124,5 @@ pkgs
 /docker/pos-bert.tar.gz
 /docker/ner-bert.tar.gz
 !/bailian_nlp/datadrive/dict/user_dict.txt
+/docker/deploy/bailian.pub
+/docker/deploy/bailian

@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
-container_id=`docker ps -a -f ancestor=ner-bert -q`
+image_type="ner"
+image_name=${image_type}-bert
+container_id=`docker ps -a -f ancestor=${image_name} -q`
 if [ ! -z "${container_id}" -a "${container_id}" != " " ]; then
-    echo "restart ner-bert"
+    echo "restart ${image_name}"
     docker restart ${container_id}
 else
-    echo "create ner-bert"
-    docker run -d --shm-size=300m -p 50002:50002 --memory=500m --restart=always ner-bert
+    echo "create ${image_name}"
+    docker run -d --shm-size=300m -p 50010:50002 --memory=500m --restart=always ${image_name}
 fi
