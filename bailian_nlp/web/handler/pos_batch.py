@@ -3,8 +3,8 @@ from .base import ApiBaseHandler
 from ..utils.common import timer
 
 
-class PosTaggerHandler(ApiBaseHandler):
-    name = 'PosTagger'
+class BatchPosTaggerHandler(ApiBaseHandler):
+    name = 'BatchPosTagger'
 
     async def post(self, *args, **kwargs):
         return await self.get(*args, **kwargs)
@@ -21,12 +21,20 @@ class PosTaggerHandler(ApiBaseHandler):
 
         else:
             try:
+                import demjson
+                text_arr = demjson.decode(text)
+
+                if not isinstance(text_arr, list):
+                    raise Exception(
+                        'parameter text should be the json string that can decode as array!'
+                    )
+
                 from .. import global_var
-                result = global_var.pos_tagger.lexerCustom(text)
+                result = global_var.pos_tagger.lexerCustom(text_arr, ignore=True)
 
                 self.write({
                     'status': 'success',
-                    'result': result[0]
+                    'result': result
                 })
 
             except Exception as e:

@@ -85,3 +85,91 @@ def recover_model_from_config(config: dict):
     return model_type.from_config(config['params'])
 
 
+# TODO 模型显存预估函数待完成
+# def modelsize(model, batch, type_size=4, optimizer="adam"):
+#     '''
+#     模型显存占用监测函数
+#     :param model: 输入的模型
+#     :param batch: 实际中需要输入的Tensor变量
+#     :param type_size: 默认为 4 默认类型为 float32
+#     :return:
+#     '''
+#     import torch.nn as nn
+#     import torch
+#     para = sum([np.prod(list(p.size())) for p in model.parameters()])
+#     print('Model {} : params: {:4f}M'.format(model._get_name(), para * type_size / 1000 / 1000))
+#
+#     with torch.no_grad():
+#         input_ = batch
+#
+#         mods = list(model.modules())
+#         out_sizes = []
+#
+#         def size_counter(o):
+#             if isinstance(o, tuple) or isinstance(o, list):
+#                 for i in o:
+#                     size_counter(i)
+#             else:
+#                 out_sizes.append(np.array(o.size()))
+#
+#         print(len(mods))
+#         for i in range(1, len(mods)):
+#             m = mods[i]
+#             if isinstance(m, nn.ReLU):
+#                 if m.inplace:
+#                     continue
+#             try:
+#                 out = m.forward(input_)
+#             except ValueError:
+#                 out = m.forward(*input_)
+#
+#             size_counter(out)
+#             print(out_sizes)
+#             input_ = out
+#
+#         total_nums = 0
+#         for i in range(len(out_sizes)):
+#             s = out_sizes[i]
+#             nums = np.prod(np.array(s))
+#             total_nums += nums
+#
+#     '''
+#         显存占用 = 模型自身参数 × n + batch size × 输出参数量 × 2 + 一个batch的输入数据（往往忽略）
+#         n是根据优化算法来定的，如果选用SGD， 则 n = 2， 如果选择Adam， 则 n = 4.
+#     '''
+#     base_n = 4 if optimizer.lower() == 'adam' else 2
+#     print('Model {} : intermedite variables: {:3f} M (without backward)'
+#           .format(model._get_name(), total_nums * type_size / 1000 / 1000))
+#     print('Model {} : intermedite variables: {:3f} M (with backward)'
+#           .format(model._get_name(), total_nums * type_size * base_n / 1000 / 1000))
+#
+#
+# if __name__ == '__main__':
+#     from bailian_nlp.modules import BertData
+#     from bailian_nlp.released.settings import DEFAULT_POS_TRAIN_FILE, DEFAULT_POS_VALID_FILE, CHINESE_BERT_VOCAB_FILE, \
+#         CHINESE_BERT_MODEL_CONFIG_FILE, CHINESE_BERT_MODEL_FILE
+#
+#     import os
+#     train_path = os.path.join(os.path.dirname(DEFAULT_POS_TRAIN_FILE), 'train_small.csv')
+#     data = BertData.create(
+#         train_path,
+#         DEFAULT_POS_VALID_FILE,
+#         CHINESE_BERT_VOCAB_FILE,
+#         data_type="bert_uncased",
+#         max_seq_len=128,
+#         batch_size=128
+#     )
+#
+#     from bailian_nlp.modules.models import bert_models
+#
+#     model = bert_models.BertBiLSTMAttnCRF.create(
+#         len(data.label2idx),
+#         CHINESE_BERT_MODEL_CONFIG_FILE,
+#         CHINESE_BERT_MODEL_FILE,
+#         enc_hidden_dim=256,
+#         freeze=False,
+#     )
+#
+#     for batch in data.train_dl:
+#         modelsize(model, batch)
+#         break

@@ -342,6 +342,6 @@ def build_pos_single_data_from_hanlp_dict():
 if __name__ == '__main__':
     # build_pos_fake_data()
 
-    build_pos_single_data_from_hanlp_dict()
+    # build_pos_single_data_from_hanlp_dict()
 
-    # build_pos_train_and_valid_data()
+    build_pos_train_and_valid_data()
