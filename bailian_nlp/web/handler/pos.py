@@ -11,9 +11,9 @@ class PosTaggerHandler(ApiBaseHandler):
 
     @timer
     async def get(self, *args, **kwargs):
-        text = self.get_argument('text', None, strip=False)
+        text_arr = self.get_arguments('text', strip=False)
 
-        if text is None:
+        if len(text_arr) == 0:
             self.write({
                 'status': 'error',
                 'msg': 'parameter text is null!'
@@ -22,11 +22,11 @@ class PosTaggerHandler(ApiBaseHandler):
         else:
             try:
                 from .. import global_var
-                result = global_var.pos_tagger.lexerCustom(text)
+                result = global_var.pos_tagger.lexerCustom(text_arr, ignore=True)
 
                 self.write({
                     'status': 'success',
-                    'result': result[0]
+                    'result': result
                 })
 
             except Exception as e:
