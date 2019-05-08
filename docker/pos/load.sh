@@ -16,7 +16,7 @@ if [ ! -z "${image_id}" -a "${image_id}" != " " ]; then
 fi
 
 if [ "x" != "x"$1 ]; then
-    # 说明是传入文件参数
+    # 说明是传入了文件参数
     image_file=$1
 else
     current_dir=$(dirname $0)

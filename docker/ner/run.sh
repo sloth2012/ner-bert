@@ -8,5 +8,5 @@ if [ ! -z "${container_id}" -a "${container_id}" != " " ]; then
     docker restart ${container_id}
 else
     echo "create ${image_name}"
-    docker run -d --shm-size=300m -p 50010:50002 --memory=500m --restart=always ${image_name}
+    docker run -d --shm-size=300m -p 50010:50002 --memory=1000m --restart=always ${image_name}
 fi

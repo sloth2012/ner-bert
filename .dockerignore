@@ -33,3 +33,13 @@ packages
 docker
 !/bailian_nlp/datadrive/dict/user_dict.txt
 .DS_Store
+
+
+# 暂时用不到静态页面
+/bailian_nlp/web/resource/static/fonts/
+/bailian_nlp/web/resource/static/css/
+/bailian_nlp/web/resource/static/js/
+/bailian_nlp/web/resource/static/images/
+/bailian_nlp/web/resource/template/base.html
+/bailian_nlp/web/resource/template/news/
+/bailian_nlp/web/resource/template/wechat_profile.html
